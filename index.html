@@ -5,6 +5,7 @@
 <title>Ultra Image AI | 4X + Vetorizador</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/potrace/1.1.3/potrace.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/upscaler/dist/browser/umd/upscaler.min.js"></script>
 <style>
 *{
 margin:0;
@@ -112,6 +113,9 @@ const upscaleBtn = document.getElementById('upscaleBtn');
 const vectorizeBtn = document.getElementById('vectorizeBtn');
 const canvas = document.getElementById('upscaledCanvas');
 const ctx = canvas.getContext('2d');
+const upscaler = new Upscaler({
+model: 'esrgan-lite'
+});
 const scaleSelect = document.getElementById('scaleSelect');
 const loadingText = document.getElementById('loadingText');
 const svgContainer = document.getElementById('svgContainer');
@@ -135,87 +139,63 @@ uploadedImage.src = event.target.result;
 reader.readAsDataURL(file);
 });
 
-upscaleBtn.addEventListener('click', () => {
+upscaleBtn.addEventListener('click', async () => {
 if(!uploadedImage){
 alert('Envie uma imagem primeiro.');
 return;
 }
 
+loadingText.innerText = 'IA melhorando imagem...';
 loadingText.style.display = 'block';
+upscaleBtn.disabled = true;
 
-uploadedImage.onload = () => {
+try{
 const scale = parseInt(scaleSelect.value);
 
-canvas.width = uploadedImage.width * scale;
-canvas.height = uploadedImage.height * scale;
-
-ctx.imageSmoothingEnabled = true;
-ctx.imageSmoothingQuality = 'high';
-
-ctx.drawImage(
-uploadedImage,
-0,
-0,
-canvas.width,
-canvas.height
-);
-
-applySharpen();
-loadingText.style.display = 'none';
-};
-
-if(uploadedImage.complete){
-uploadedImage.onload();
-}
+const result = await upscaler.upscale(uploadedImage, {
+patchSize: 64,
+padding: 2,
+scale
 });
 
-function applySharpen(){
-const weights = [
-0,-1,0,
--1,5,-1,
-0,-1,0
-];
+canvas.width = result.width;
+canvas.height = result.height;
 
-const side = Math.round(Math.sqrt(weights.length));
-const halfSide = Math.floor(side / 2);
+ctx.clearRect(0,0,canvas.width,canvas.height);
+ctx.drawImage(result,0,0);
 
-const src = ctx.getImageData(0,0,canvas.width,canvas.height);
-const sw = src.width;
-const sh = src.height;
-const output = ctx.createImageData(sw,sh);
-const dst = output.data;
-const srcData = src.data;
+applyFastSharpen();
 
-for(let y=0;y<sh;y++){
-for(let x=0;x<sw;x++){
-let r=0,g=0,b=0,a=0;
+loadingText.innerText = 'Imagem melhorada com IA!';
 
-for(let cy=0;cy<side;cy++){
-for(let cx=0;cx<side;cx++){
-const scy = y + cy - halfSide;
-const scx = x + cx - halfSide;
+setTimeout(() => {
+loadingText.style.display = 'none';
+},1200);
 
-if(scy>=0 && scy<sh && scx>=0 && scx<sw){
-const srcOffset = (scy * sw + scx) * 4;
-const wt = weights[cy * side + cx];
-
-r += srcData[srcOffset] * wt;
-g += srcData[srcOffset+1] * wt;
-b += srcData[srcOffset+2] * wt;
-a += srcData[srcOffset+3] * wt;
-}
-}
+}catch(err){
+console.error(err);
+alert('Erro ao processar imagem com IA.');
+loadingText.style.display = 'none';
 }
 
-const dstOffset = (y * sw + x) * 4;
-dst[dstOffset] = r;
-dst[dstOffset+1] = g;
-dst[dstOffset+2] = b;
-dst[dstOffset+3] = a;
-}
-}
+upscaleBtn.disabled = false;
+});
 
-ctx.putImageData(output,0,0);
+function applyFastSharpen(){
+ctx.filter = 'contrast(1.04) saturate(1.02)';
+
+const tempCanvas = document.createElement('canvas');
+const tempCtx = tempCanvas.getContext('2d');
+
+tempCanvas.width = canvas.width;
+tempCanvas.height = canvas.height;
+
+tempCtx.drawImage(canvas,0,0);
+
+ctx.clearRect(0,0,canvas.width,canvas.height);
+ctx.drawImage(tempCanvas,0,0);
+
+ctx.filter = 'none';
 }
 
 vectorizeBtn.addEventListener('click', () => {
@@ -234,7 +214,7 @@ tempCanvas.height = uploadedImage.height;
 
 tempCtx.drawImage(uploadedImage,0,0);
 
-const dataURL = tempCanvas.toDataURL('image/png');
+const dataURL = tempCanvas.toDataURL('image/jpeg',0.7);
 
 Potrace.loadImageFromUrl(dataURL);
 
@@ -246,10 +226,24 @@ loadingText.style.display = 'none';
 });
 
 downloadUpscaled.addEventListener('click', () => {
+if(canvas.width === 0){
+alert('Nenhuma imagem melhorada ainda.');
+return;
+}
+
+canvas.toBlob(blob => {
+const url = URL.createObjectURL(blob);
+
 const link = document.createElement('a');
 link.download = 'imagem-melhorada.png';
-link.href = canvas.toDataURL('image/png');
+link.href = url;
+
+document.body.appendChild(link);
 link.click();
+document.body.removeChild(link);
+
+URL.revokeObjectURL(url);
+},'image/png');
 });
 
 downloadSVG.addEventListener('click', () => {
