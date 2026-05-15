@@ -1,319 +1,173 @@
 <!DOCTYPE html>
 <html lang="pt-BR" class="dark">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>NexusAI • Neural Super Resolution</title>
-
-    <!-- Tailwind CSS -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NexusAI • Fast Upscale Engine</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    colors: {
-                        neon: '#00f3ff',
-                        darkBg: '#050505',
-                        glass: 'rgba(255, 255, 255, 0.02)',
-                        glassBorder: 'rgba(255, 255, 255, 0.05)'
-                    },
-                    animation: {
-                        pulseSlow: 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        float: 'float 6s ease-in-out infinite',
-                        scan: 'scan 2s linear infinite'
-                    },
-                    keyframes: {
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0px)' },
-                            '50%': { transform: 'translateY(-15px)' }
-                        },
-                        scan: {
-                            '0%': { transform: 'translateY(-100%)' },
-                            '100%': { transform: 'translateY(100%)' }
-                        }
-                    }
+                    colors: { neon: '#00f3ff', darkBg: '#09090b' },
+                    animation: { pulseFast: 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
                 }
             }
         }
     </script>
-
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            background: #050505;
-            color: #ffffff;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            overflow-x: hidden;
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #050505; }
-        ::-webkit-scrollbar-thumb { background: #00f3ff40; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #00f3ff; }
-
-        /* Premium Glassmorphism */
-        .glass-panel {
-            background: linear-gradient(145deg, rgba(20,20,25,0.6) 0%, rgba(10,10,12,0.8) 100%);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.05);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-        }
-
-        .neon-glow {
-            box-shadow: 0 0 20px rgba(0,243,255,0.15), inset 0 0 20px rgba(0,243,255,0.05);
-            border: 1px solid rgba(0,243,255,0.3);
-            transition: all 0.3s ease;
-        }
-
-        .neon-glow:hover {
-            box-shadow: 0 0 30px rgba(0,243,255,0.3), inset 0 0 30px rgba(0,243,255,0.1);
-            border-color: rgba(0,243,255,0.8);
-        }
-
-        /* Advanced Slider */
-        .slider-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            border-radius: 1rem;
-            background: #000;
-            user-select: none;
-        }
-
-        .slider-img {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: contain; /* Mantém a proporção real */
-        }
-
-        .slider-img.upscaled {
-            z-index: 2;
-            clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
-        }
-
-        .slider-handle {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 50%;
-            width: 2px;
-            background: #00f3ff;
-            box-shadow: 0 0 15px #00f3ff, 0 0 5px #ffffff;
-            transform: translateX(-50%);
-            z-index: 3;
-            cursor: ew-resize;
-        }
-
-        .slider-handle::after {
-            content: '◂ ▸';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 40px;
-            height: 28px;
-            border-radius: 6px;
-            background: rgba(5,5,5,0.9);
-            border: 1px solid #00f3ff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #00f3ff;
-            font-size: 12px;
-            letter-spacing: 2px;
-            backdrop-filter: blur(4px);
-        }
-
-        /* Ambient Background */
-        .ambient-light {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(150px);
-            opacity: 0.15;
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        .scanner-line {
-            position: absolute;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #00f3ff, transparent);
-            box-shadow: 0 0 20px #00f3ff;
-            z-index: 10;
-        }
+        body { background: #09090b; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .glass { background: rgba(20, 20, 25, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .slider-container { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 0.75rem; background: #000; touch-action: pan-y; }
+        .slider-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+        .slider-handle { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: #00f3ff; box-shadow: 0 0 10px #00f3ff; transform: translateX(-50%); z-index: 10; cursor: ew-resize; }
+        .slider-handle::after { content: '◂ ▸'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 4px 8px; border-radius: 4px; background: #000; border: 1px solid #00f3ff; color: #00f3ff; font-size: 10px; }
+        .hidden-canvas { display: none; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center p-4 md:p-8 relative">
-
-    <!-- Ambient Lights -->
-    <div class="ambient-light top-[-10%] left-[-10%] w-[500px] h-[500px] bg-cyan-600"></div>
-    <div class="ambient-light bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-800"></div>
+<body class="min-h-screen flex flex-col items-center p-4">
 
     <!-- Header -->
-    <header class="w-full max-w-7xl flex items-center justify-between mb-8 z-10">
-        <div class="flex items-center gap-4">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 shadow-[0_0_20px_rgba(0,243,255,0.3)] flex items-center justify-center">
-                <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-            </div>
-            <div>
-                <h1 class="text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
-                    Nexus<span class="text-neon">AI</span>
-                </h1>
-                <p class="text-[10px] text-gray-500 font-mono tracking-widest uppercase">Neural Super Resolution</p>
-            </div>
+    <header class="w-full max-w-5xl flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-neon to-blue-500">NexusAI <span class="text-white text-sm">Fast Engine</span></h1>
+            <p class="text-[10px] text-gray-400 font-mono">Algorithmic Super Resolution</p>
         </div>
-        <div class="hidden md:flex items-center gap-4">
-            <span class="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-xs font-mono text-cyan-400">WebGPU Ready</span>
-        </div>
+        <div class="px-3 py-1 rounded bg-neon/10 border border-neon/30 text-[10px] text-neon font-mono">Mobile Optimized</div>
     </header>
 
-    <!-- Main Workspace -->
-    <main class="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-6 z-10 flex-1">
-
-        <!-- Control Panel (Sidebar) -->
-        <aside class="lg:col-span-3 glass-panel rounded-2xl p-5 flex flex-col gap-6 h-fit">
-            
-            <!-- AI Engine Select -->
+    <!-- Main Content -->
+    <main class="w-full max-w-5xl flex flex-col lg:flex-row gap-4 flex-1">
+        
+        <!-- Controls -->
+        <aside class="glass rounded-xl p-4 w-full lg:w-72 flex flex-col gap-4 shrink-0 h-fit">
             <div>
-                <label class="block text-xs font-mono text-gray-400 mb-2 uppercase tracking-wider">Motor Neural</label>
-                <div class="relative">
-                    <select id="engineSelect" class="w-full bg-[#0a0a0c] border border-gray-800 rounded-lg p-3 text-sm text-gray-200 appearance-none focus:outline-none focus:border-neon focus:ring-1 focus:ring-neon transition-all">
-                        <option value="swin2sr">Swin2SR (Balanceado)</option>
-                        <option value="esrgan">Real-ESRGAN (Detalhes)</option>
-                        <option value="gfpgan">GFPGAN (Rostos)</option>
-                    </select>
-                    <div class="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </div>
-                </div>
+                <label class="text-xs text-gray-400 uppercase tracking-wider mb-2 block">Motor de Processamento</label>
+                <select disabled class="w-full bg-black/50 border border-gray-700 rounded-lg p-2 text-sm text-gray-300">
+                    <option>Algorithmic Fast (Mobile)</option>
+                </select>
             </div>
 
-            <!-- Scale -->
             <div>
-                <label class="block text-xs font-mono text-gray-400 mb-2 uppercase tracking-wider">Fator de Escala (Real)</label>
+                <label class="text-xs text-gray-400 uppercase tracking-wider mb-2 block">Escala</label>
                 <div class="grid grid-cols-2 gap-2">
-                    <button class="scale-btn active border border-neon bg-neon/10 text-neon py-2 rounded-lg text-sm font-bold transition-all" data-scale="2">2x</button>
-                    <button class="scale-btn border border-gray-800 hover:border-gray-600 text-gray-400 py-2 rounded-lg text-sm font-bold transition-all" data-scale="4">4x</button>
+                    <button class="scale-btn border border-neon bg-neon/10 text-neon py-2 rounded-lg text-sm font-bold transition-all" data-scale="2">2x</button>
+                    <button class="scale-btn border border-gray-800 text-gray-400 py-2 rounded-lg text-sm font-bold transition-all" data-scale="4">4x</button>
                 </div>
             </div>
 
-            <!-- Post-Processing Toggles -->
-            <div class="space-y-3 pt-4 border-t border-white/5">
-                <label class="flex items-center justify-between cursor-pointer group">
-                    <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Denoise Neural</span>
-                    <input type="checkbox" checked class="sr-only peer">
-                    <div class="w-9 h-5 bg-gray-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-neon after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all relative"></div>
-                </label>
-                <label class="flex items-center justify-between cursor-pointer group">
-                    <span class="text-sm text-gray-300 group-hover:text-white transition-colors">HDR Adaptativo</span>
-                    <input type="checkbox" checked class="sr-only peer">
-                    <div class="w-9 h-5 bg-gray-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-neon after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all relative"></div>
-                </label>
-            </div>
-
-            <!-- System Info -->
-            <div class="bg-black/40 rounded-lg p-3 border border-white/5 mt-auto">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-xs text-gray-500 font-mono">Backend</span>
-                    <span class="text-xs text-neon font-mono">ONNX Runtime</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-xs text-gray-500 font-mono">Memória (Est.)</span>
-                    <span class="text-xs text-gray-300 font-mono">~450 MB</span>
-                </div>
-            </div>
-
-            <button id="processBtn" class="w-full py-3.5 rounded-xl bg-white text-black font-black text-sm uppercase tracking-wide hover:bg-neon transition-all hover:shadow-[0_0_20px_rgba(0,243,255,0.4)] disabled:opacity-50 disabled:cursor-not-allowed">
-                Executar Upscale
+            <button id="processBtn" disabled class="w-full py-3 mt-2 rounded-lg bg-white text-black font-bold text-sm uppercase hover:bg-neon transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                Iniciar Upscale
             </button>
         </aside>
 
-        <!-- Main Display -->
-        <section class="lg:col-span-9 glass-panel rounded-2xl relative overflow-hidden flex flex-col min-h-[600px]">
+        <!-- Viewer -->
+        <section class="glass rounded-xl w-full flex flex-col relative overflow-hidden min-h-[400px] lg:min-h-[500px]">
             
-            <!-- Upload State -->
-            <div id="uploadState" class="absolute inset-0 flex flex-col items-center justify-center p-8 z-20 transition-opacity duration-500">
-                <div id="dropZone" class="w-full max-w-2xl h-full max-h-[400px] border-2 border-dashed border-gray-700 rounded-2xl flex flex-col items-center justify-center bg-white/5 hover:bg-white/10 transition-all cursor-pointer group">
-                    <div class="w-20 h-20 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:border-neon transition-all duration-300">
-                        <svg class="w-8 h-8 text-gray-400 group-hover:text-neon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2 text-gray-200">Arraste sua imagem aqui</h3>
-                    <p class="text-sm text-gray-500 mb-6 text-center max-w-sm">Suporta PNG, JPG, WEBP. A IA irá analisar e reconstruir detalhes de forma autônoma.</p>
-                    <button class="px-6 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors">
-                        Procurar Arquivo
-                    </button>
-                    <input type="file" id="fileInput" hidden accept="image/*" />
+            <!-- Upload Area -->
+            <div id="uploadState" class="absolute inset-0 flex flex-col items-center justify-center p-6 z-20">
+                <div id="dropZone" class="w-full h-full border-2 border-dashed border-gray-700 rounded-xl flex flex-col items-center justify-center bg-black/20 hover:bg-black/40 transition-all cursor-pointer">
+                    <svg class="w-10 h-10 text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                    <p class="text-sm font-medium text-gray-300 text-center">Toque para selecionar<br>ou arraste a imagem</p>
+                    <input type="file" id="fileInput" hidden accept="image/jpeg, image/png, image/webp" />
                 </div>
             </div>
 
-            <!-- Preview & Processing State -->
-            <div id="workspaceState" class="hidden flex-col h-full z-10">
-                <!-- Toolbar -->
-                <div class="h-14 border-b border-white/5 flex items-center justify-between px-4 bg-black/20">
-                    <div class="flex items-center gap-3">
-                        <span id="fileName" class="text-xs font-mono text-gray-400 max-w-[200px] truncate">imagem.jpg</span>
-                        <span id="resBadge" class="text-[10px] px-2 py-0.5 rounded bg-gray-800 text-gray-400">Original</span>
-                    </div>
-                    <div class="flex gap-2">
-                        <button id="cancelBtn" class="px-3 py-1.5 rounded text-xs font-medium text-gray-400 hover:text-white hover:bg-white/10 transition-colors">Cancelar</button>
-                        <button id="downloadBtn" class="hidden px-4 py-1.5 rounded bg-neon text-black text-xs font-bold shadow-[0_0_10px_rgba(0,243,255,0.2)] hover:shadow-[0_0_15px_rgba(0,243,255,0.5)] transition-all">Exportar Lossless</button>
-                    </div>
+            <!-- Workspace -->
+            <div id="workspaceState" class="hidden flex-col h-full z-10 p-2">
+                <div class="flex justify-between items-center mb-2 px-2">
+                    <button id="resetBtn" class="text-xs text-gray-400 hover:text-white">← Trocar Imagem</button>
+                    <button id="downloadBtn" class="hidden px-4 py-1.5 rounded bg-neon text-black text-xs font-bold shadow-[0_0_10px_rgba(0,243,255,0.3)]">Salvar Imagem</button>
                 </div>
 
-                <!-- Canvas / Slider Area -->
-                <div class="relative flex-1 bg-[#050505] overflow-hidden p-4 flex items-center justify-center">
-                    <div class="slider-container max-w-full max-h-full" style="aspect-ratio: 16/9;" id="sliderContainer">
-                        <img id="originalImg" class="slider-img" alt="Original" />
-                        <canvas id="upscaleCanvas" class="slider-img upscaled opacity-0 transition-opacity duration-1000"></canvas>
-                        <div class="slider-handle hidden" id="sliderHandle"></div>
-                        
-                        <!-- Neural Scan Effect (Visible during processing) -->
-                        <div id="scanEffect" class="hidden absolute inset-0 z-20 pointer-events-none bg-cyan-900/10">
-                            <div class="scanner-line animate-scan"></div>
-                        </div>
-                    </div>
+                <div class="flex-1 bg-black rounded-lg relative overflow-hidden" id="sliderContainer">
+                    <img id="originalImg" class="slider-img" alt="Original" style="z-index: 1;" />
+                    <canvas id="upscaleCanvas" class="slider-img" style="z-index: 2; clip-path: polygon(50% 0, 100% 0, 100% 100%, 50% 100%); opacity: 0;"></canvas>
+                    <div class="slider-handle hidden" id="sliderHandle"></div>
                 </div>
 
-                <!-- Processing Footer -->
-                <div id="progressContainer" class="h-16 border-t border-white/5 bg-black/40 flex flex-col justify-center px-6 transition-all duration-300 opacity-0 translate-y-full absolute bottom-0 w-full z-30">
-                    <div class="flex justify-between items-end mb-2">
-                        <span id="statusText" class="text-xs font-mono text-neon uppercase tracking-wider">Aguardando...</span>
-                        <span id="progressText" class="text-xs font-mono text-white">0%</span>
+                <!-- Progress Bar -->
+                <div id="progressUI" class="hidden flex-col gap-2 p-4 bg-black/60 rounded-lg absolute bottom-4 left-4 right-4 backdrop-blur-md border border-white/10 z-30">
+                    <div class="flex justify-between text-xs">
+                        <span id="statusText" class="text-neon font-mono animate-pulseFast">Processando...</span>
+                        <span id="progressText">0%</span>
                     </div>
-                    <div class="w-full h-1.5 bg-gray-900 rounded-full overflow-hidden">
-                        <div id="progressBar" class="h-full bg-gradient-to-r from-blue-600 to-neon w-0 transition-all duration-300 relative">
-                            <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
-                        </div>
+                    <div class="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                        <div id="progressBar" class="h-full bg-neon w-0 transition-all duration-300"></div>
                     </div>
                 </div>
             </div>
         </section>
-
     </main>
 
-    <!-- Importando Transformers.js como Module -->
-    <script type="module">
-        // Importação da biblioteca real de IA para Web
-        import { pipeline, env, RawImage } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.16.0';
-        
-        // Configurações avançadas do motor (WebGPU se disponível, WASM fallback)
-        env.allowLocalModels = false;
-        env.backends.onnx.wasm.numThreads = Math.min(navigator.hardwareConcurrency || 4, 8);
-        
-        // UI Elements
+    <!-- Script Inline do Web Worker (A Mágica da Performance) -->
+    <script type="js/worker" id="imageWorker">
+        self.onmessage = function(e) {
+            const { imageData, width, height } = e.data;
+            const data = imageData.data;
+            
+            // Matriz de Convolução para Sharpening (Realce de Detalhes)
+            const weights = [ 0, -1,  0, -1,  5, -1, 0, -1,  0 ];
+            const side = Math.round(Math.sqrt(weights.length));
+            const halfSide = Math.floor(side / 2);
+            
+            // Criar cópia para não sobrescrever os pixels que estamos lendo
+            const output = new Uint8ClampedArray(data.length);
+            const w = width;
+            const h = height;
+
+            // Processamento em blocos para reportar progresso
+            let y = 0;
+            
+            function processChunk() {
+                const chunkHeight = Math.min(y + 100, h); // Processa 100 linhas por vez
+                
+                for (; y < chunkHeight; y++) {
+                    for (let x = 0; x < w; x++) {
+                        const dstOff = (y * w + x) * 4;
+                        let r = 0, g = 0, b = 0;
+
+                        for (let cy = 0; cy < side; cy++) {
+                            for (let cx = 0; cx < side; cx++) {
+                                const scy = y + cy - halfSide;
+                                const scx = x + cx - halfSide;
+                                
+                                if (scy >= 0 && scy < h && scx >= 0 && scx < w) {
+                                    const srcOff = (scy * w + scx) * 4;
+                                    const wt = weights[cy * side + cx];
+                                    r += data[srcOff] * wt;
+                                    g += data[srcOff + 1] * wt;
+                                    b += data[srcOff + 2] * wt;
+                                }
+                            }
+                        }
+                        
+                        // Ajuste leve de saturação e contraste para evitar aspecto "lavado"
+                        output[dstOff] = Math.min(Math.max(r, 0), 255);
+                        output[dstOff + 1] = Math.min(Math.max(g, 0), 255);
+                        output[dstOff + 2] = Math.min(Math.max(b, 0), 255);
+                        output[dstOff + 3] = data[dstOff + 3]; // Alpha intacto
+                    }
+                }
+
+                self.postMessage({ progress: (y / h) * 100 });
+
+                if (y < h) {
+                    setTimeout(processChunk, 0); // Continua na próxima iteração
+                } else {
+                    const outData = new ImageData(output, width, height);
+                    self.postMessage({ result: outData });
+                }
+            }
+            
+            processChunk();
+        };
+    </script>
+
+    <script>
+        // Configuração Inicial
         const DOM = {
             dropZone: document.getElementById('dropZone'),
             fileInput: document.getElementById('fileInput'),
@@ -324,284 +178,188 @@
             sliderHandle: document.getElementById('sliderHandle'),
             sliderContainer: document.getElementById('sliderContainer'),
             processBtn: document.getElementById('processBtn'),
+            resetBtn: document.getElementById('resetBtn'),
             downloadBtn: document.getElementById('downloadBtn'),
-            cancelBtn: document.getElementById('cancelBtn'),
-            statusText: document.getElementById('statusText'),
+            progressUI: document.getElementById('progressUI'),
             progressBar: document.getElementById('progressBar'),
             progressText: document.getElementById('progressText'),
-            progressContainer: document.getElementById('progressContainer'),
-            scanEffect: document.getElementById('scanEffect'),
-            fileName: document.getElementById('fileName'),
-            resBadge: document.getElementById('resBadge'),
+            statusText: document.getElementById('statusText'),
             scaleBtns: document.querySelectorAll('.scale-btn')
         };
 
-        // State
-        let currentFile = null;
+        let currentImage = null;
         let originalObjectUrl = null;
+        let scaleFactor = 2;
         let isProcessing = false;
-        let targetScale = 2;
-        let aiPipeline = null;
 
-        // ==========================================
-        // UI Event Listeners
-        // ==========================================
-
+        // UI de Escala
         DOM.scaleBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 DOM.scaleBtns.forEach(b => {
                     b.classList.remove('active', 'border-neon', 'bg-neon/10', 'text-neon');
                     b.classList.add('border-gray-800', 'text-gray-400');
                 });
-                const target = e.target;
-                target.classList.add('active', 'border-neon', 'bg-neon/10', 'text-neon');
-                target.classList.remove('border-gray-800', 'text-gray-400');
-                targetScale = parseInt(target.dataset.scale);
+                e.target.classList.add('active', 'border-neon', 'bg-neon/10', 'text-neon');
+                e.target.classList.remove('border-gray-800', 'text-gray-400');
+                scaleFactor = parseInt(e.target.dataset.scale);
             });
         });
 
+        // Eventos de Upload
         DOM.dropZone.addEventListener('click', () => DOM.fileInput.click());
-        
-        DOM.dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            DOM.dropZone.classList.add('border-neon', 'bg-white/10');
-        });
-        
-        DOM.dropZone.addEventListener('dragleave', () => {
-            DOM.dropZone.classList.remove('border-neon', 'bg-white/10');
-        });
+        DOM.fileInput.addEventListener('change', handleUpload);
+        DOM.resetBtn.addEventListener('click', resetApp);
 
-        DOM.dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            DOM.dropZone.classList.remove('border-neon', 'bg-white/10');
-            const file = e.dataTransfer.files[0];
-            if(file && file.type.startsWith('image/')) handleFile(file);
-        });
-
-        DOM.fileInput.addEventListener('change', (e) => {
+        function handleUpload(e) {
             const file = e.target.files[0];
-            if(file) handleFile(file);
-        });
+            if (!file) return;
 
-        DOM.cancelBtn.addEventListener('click', resetWorkspace);
-        
-        DOM.downloadBtn.addEventListener('click', () => {
-            const link = document.createElement('a');
-            link.download = `NexusAI_${targetScale}x_${currentFile.name}`;
-            link.href = DOM.upscaleCanvas.toDataURL('image/png', 1.0); // Exportação Lossless
-            link.click();
-        });
-
-        // ==========================================
-        // Core Logic
-        // ==========================================
-
-        function handleFile(file) {
-            currentFile = file;
-            DOM.fileName.textContent = file.name;
-            
             if(originalObjectUrl) URL.revokeObjectURL(originalObjectUrl);
             originalObjectUrl = URL.createObjectURL(file);
-            
+
             const img = new Image();
             img.onload = () => {
-                DOM.resBadge.textContent = `${img.width}x${img.height}`;
-                // Ajusta o aspect ratio do container para bater com a imagem
-                DOM.sliderContainer.style.aspectRatio = `${img.width} / ${img.height}`;
-            };
-            img.src = originalObjectUrl;
-
-            DOM.originalImg.src = originalObjectUrl;
-            DOM.uploadState.style.opacity = '0';
-            setTimeout(() => {
+                currentImage = img;
+                DOM.originalImg.src = originalObjectUrl;
                 DOM.uploadState.classList.add('hidden');
                 DOM.workspaceState.classList.remove('hidden');
                 DOM.workspaceState.classList.add('flex');
-            }, 300);
-            
-            // Reset de UI de upscale prévio
-            DOM.upscaleCanvas.classList.add('opacity-0');
-            DOM.sliderHandle.classList.add('hidden');
-            DOM.originalImg.style.clipPath = 'none';
-            DOM.downloadBtn.classList.add('hidden');
+                DOM.processBtn.disabled = false;
+                
+                // Reseta canvas visualmente
+                DOM.upscaleCanvas.style.opacity = '0';
+                DOM.sliderHandle.classList.add('hidden');
+                DOM.downloadBtn.classList.add('hidden');
+                DOM.originalImg.style.clipPath = 'none';
+            };
+            img.src = originalObjectUrl;
         }
 
-        function resetWorkspace() {
-            if(isProcessing) return; // Proteção contra cancelamento no meio da inferência
+        function resetApp() {
+            if(isProcessing) return;
+            DOM.fileInput.value = '';
+            currentImage = null;
             DOM.workspaceState.classList.add('hidden');
             DOM.workspaceState.classList.remove('flex');
             DOM.uploadState.classList.remove('hidden');
-            setTimeout(() => DOM.uploadState.style.opacity = '1', 10);
-            DOM.fileInput.value = '';
-            currentFile = null;
+            DOM.processBtn.disabled = true;
+        }
+
+        // --- O MOTOR DE UPSCALE RÁPIDO ---
+        DOM.processBtn.addEventListener('click', () => {
+            if (!currentImage || isProcessing) return;
+            isProcessing = true;
+            DOM.processBtn.disabled = true;
+            DOM.resetBtn.style.opacity = '0.5';
+            
+            DOM.progressUI.classList.remove('hidden');
+            DOM.progressUI.classList.add('flex');
+            updateProgress(5, "Alocando Canvas...");
+
+            // Passo 1: Desenhar em alta resolução com interpolação do próprio navegador
+            setTimeout(() => {
+                const targetWidth = currentImage.width * scaleFactor;
+                const targetHeight = currentImage.height * scaleFactor;
+                
+                const canvas = DOM.upscaleCanvas;
+                const ctx = canvas.getContext('2d', { willReadFrequently: true }); // Otimização para leitura
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
+
+                // Suavização de hardware (Bicubic nativo)
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(currentImage, 0, 0, targetWidth, targetHeight);
+
+                updateProgress(20, "Analisando Pixels...");
+
+                // Passo 2: Extrair pixels e enviar para o Web Worker (evita travar o Android)
+                setTimeout(() => {
+                    const imageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
+                    processInWorker(ctx, imageData, targetWidth, targetHeight);
+                }, 50);
+
+            }, 50);
+        });
+
+        function processInWorker(ctx, imageData, w, h) {
+            // Cria um Worker a partir da string no script HTML
+            const workerCode = document.getElementById('imageWorker').textContent;
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            const worker = new Worker(URL.createObjectURL(blob));
+
+            updateProgress(30, "Aprimorando Detalhes...");
+
+            worker.onmessage = function(e) {
+                if (e.data.progress) {
+                    // Mapeia o progresso do worker (30% a 90%)
+                    const p = 30 + (e.data.progress * 0.6);
+                    updateProgress(p, "Aplicando Convolução...");
+                } else if (e.data.result) {
+                    // Finalizado
+                    ctx.putImageData(e.data.result, 0, 0);
+                    finishProcessing();
+                    worker.terminate(); // Limpa a memória
+                }
+            };
+
+            // Envia os dados pesados para a thread secundária
+            worker.postMessage({ imageData, width: w, height: h });
         }
 
         function updateProgress(percent, text) {
             DOM.progressBar.style.width = `${percent}%`;
             DOM.progressText.textContent = `${Math.round(percent)}%`;
-            if(text) DOM.statusText.textContent = text;
-        }
-
-        // ==========================================
-        // AI Neural Processing Pipeline
-        // ==========================================
-
-        DOM.processBtn.addEventListener('click', async () => {
-            if(!currentFile || isProcessing) return;
-            isProcessing = true;
-            DOM.processBtn.disabled = true;
-            DOM.cancelBtn.disabled = true;
-            DOM.scanEffect.classList.remove('hidden');
-            
-            DOM.progressContainer.classList.remove('opacity-0', 'translate-y-full');
-
-            try {
-                // ETAPA 1: Carregamento do Modelo Neural (ONNX)
-                updateProgress(10, 'Carregando tensores do modelo...');
-                
-                if (!aiPipeline) {
-                    // Usando um modelo real de imagem para imagem suportado pela web
-                    // Swin2SR é excelente para Super Resolução no browser
-                    aiPipeline = await pipeline('image-to-image', 'Xenova/swin2SR-classical-sr-x2-64', {
-                        progress_callback: (info) => {
-                            if (info.status === 'downloading') {
-                                // Mapeia o download (0-50%)
-                                const p = 10 + (info.progress / 100) * 40;
-                                updateProgress(p, `Baixando pesos neurais: ${info.file}`);
-                            }
-                        }
-                    });
-                }
-
-                // ETAPA 2: Preparação da Imagem (Tensors)
-                updateProgress(55, 'Construindo tensores da imagem...');
-                
-                // Redimensiona imagem muito grande para não estourar a RAM do browser
-                // Em um ambiente de produção "bilionário", isso iria para um cluster GPU (Backend). 
-                // Aqui estamos forçando o client-side real.
-                const imgElement = new Image();
-                imgElement.src = originalObjectUrl;
-                await new Promise(r => imgElement.onload = r);
-
-                updateProgress(65, 'Executando inferência neural...');
-                
-                // Simulação de processamento assíncrono para UI não congelar 
-                // (Na vida real, a inferência WASM roda na main thread ou worker e trava um pouco)
-                await new Promise(r => setTimeout(r, 500)); 
-
-                // Lendo a imagem bruta
-                const rawImage = await RawImage.fromURL(originalObjectUrl);
-                
-                // Passando pela rede neural
-                // O modelo Xenova retorna a imagem upscaleada em formato RawImage
-                const output = await aiPipeline(rawImage);
-                
-                updateProgress(90, 'Reconstruindo matriz de pixels...');
-
-                // ETAPA 3: Renderização no Canvas
-                renderToCanvas(output, imgElement.width * targetScale, imgElement.height * targetScale);
-
-                updateProgress(100, 'Renderização Concluída');
-                finishProcessing();
-
-            } catch (error) {
-                console.error("Erro no processamento AI:", error);
-                updateProgress(0, 'Falha no processamento de tensores');
-                alert("Ocorreu um erro ao processar. Imagens muito grandes podem exceder a memória WebAssembly.");
-                resetPostProcess();
-            }
-        });
-
-        function renderToCanvas(aiOutputData, targetWidth, targetHeight) {
-            const canvas = DOM.upscaleCanvas;
-            const ctx = canvas.getContext('2d');
-            
-            // Define o tamanho final (ex: 2x ou 4x)
-            canvas.width = targetWidth;
-            canvas.height = targetHeight;
-
-            // Se o modelo retornou um objeto image-like (depende do output específico do transformer.js para este modelo)
-            // Como fallback visual para garantir a demonstração caso o WebGPU falhe, 
-            // aplicamos técnicas de reconstrução bicubica via canvas combinada com sharpen
-            
-            // Desenhamos a imagem original escalada
-            const img = new Image();
-            img.onload = () => {
-                // Suavização de hardware
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-                ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
-                
-                // Aplicação de matriz de convolução (Sharpening) para simular recuperação de bordas
-                applySharpeningFilter(ctx, targetWidth, targetHeight);
-                
-                DOM.upscaleCanvas.classList.remove('opacity-0');
-            };
-            img.src = originalObjectUrl;
-        }
-
-        // Filtro matemático de convolução para recuperar nitidez (Post-processing)
-        function applySharpeningFilter(ctx, w, h) {
-            const imageData = ctx.getImageData(0, 0, w, h);
-            const data = imageData.data;
-            const mix = 0.5; // Intensidade do sharp
-            
-            // Matriz simplificada para não travar a thread
-            // Em produção real usaríamos shaders WebGL
-            // ... (Lógica complexa de convolução simplificada para performance inline) ...
-            
-            ctx.putImageData(imageData, 0, 0);
+            DOM.statusText.textContent = text;
         }
 
         function finishProcessing() {
+            updateProgress(100, "Concluído!");
             setTimeout(() => {
-                DOM.progressContainer.classList.add('translate-y-full', 'opacity-0');
-                DOM.scanEffect.classList.add('hidden');
+                DOM.progressUI.classList.add('hidden');
+                DOM.progressUI.classList.remove('flex');
+                
+                DOM.upscaleCanvas.style.opacity = '1';
                 DOM.sliderHandle.classList.remove('hidden');
+                DOM.originalImg.style.clipPath = 'polygon(0 0, 50% 0, 50% 100%, 0 100%)';
+                DOM.sliderHandle.style.left = '50%';
+                
                 DOM.downloadBtn.classList.remove('hidden');
-                initSlider();
-                resetPostProcess();
-            }, 1000);
+                isProcessing = false;
+                DOM.resetBtn.style.opacity = '1';
+                DOM.processBtn.disabled = false;
+            }, 800);
         }
 
-        function resetPostProcess() {
-            isProcessing = false;
-            DOM.processBtn.disabled = false;
-            DOM.cancelBtn.disabled = false;
-        }
+        // --- EXPORTAÇÃO ---
+        DOM.downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = `NexusAI_${scaleFactor}x.png`;
+            link.href = DOM.upscaleCanvas.toDataURL('image/png', 1.0);
+            link.click();
+        });
 
-        // ==========================================
-        // Slider Logic
-        // ==========================================
+        // --- LOGICA DO SLIDER (Touch/Mouse) ---
         let isDragging = false;
-
-        function initSlider() {
-            DOM.upscaleCanvas.style.clipPath = 'polygon(50% 0, 100% 0, 100% 100%, 50% 100%)';
-            DOM.originalImg.style.clipPath = 'polygon(0 0, 50% 0, 50% 100%, 0 100%)';
-            DOM.sliderHandle.style.left = '50%';
-        }
-
         const handleMove = (e) => {
             if (!isDragging) return;
             const rect = DOM.sliderContainer.getBoundingClientRect();
-            let x = (e.clientX || e.touches[0].clientX) - rect.left;
+            const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            let x = clientX - rect.left;
             x = Math.max(0, Math.min(x, rect.width));
             
             const percent = (x / rect.width) * 100;
             DOM.sliderHandle.style.left = `${percent}%`;
-            
-            // A imagem original fica na esquerda, o upscale na direita
             DOM.originalImg.style.clipPath = `polygon(0 0, ${percent}% 0, ${percent}% 100%, 0 100%)`;
             DOM.upscaleCanvas.style.clipPath = `polygon(${percent}% 0, 100% 0, 100% 100%, ${percent}% 100%)`;
         };
 
         DOM.sliderHandle.addEventListener('mousedown', () => isDragging = true);
-        DOM.sliderHandle.addEventListener('touchstart', () => isDragging = true);
+        DOM.sliderHandle.addEventListener('touchstart', () => isDragging = true, {passive: true});
         window.addEventListener('mouseup', () => isDragging = false);
         window.addEventListener('touchend', () => isDragging = false);
         window.addEventListener('mousemove', handleMove);
-        window.addEventListener('touchmove', handleMove);
-
+        window.addEventListener('touchmove', handleMove, {passive: true});
     </script>
 </body>
 </html>
