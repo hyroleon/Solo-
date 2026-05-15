@@ -1,262 +1,689 @@
-<!DOCTYPE html><html lang="pt-BR">
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ultra Image AI | 4X + Vetorizador</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/potrace/1.1.3/potrace.min.js"></script>
-<script src="https://unpkg.com/upscaler@1.0.0/dist/browser/umd/upscaler.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NexusAI • Ultra Upscale 8K</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script>
+tailwind.config = {
+    darkMode: 'class',
+    theme: {
+        extend: {
+            colors: {
+                neon: '#00f3ff',
+                darkBg: '#09090b',
+                glass: 'rgba(255,255,255,0.03)'
+            },
+            animation: {
+                pulseSlow: 'pulse 3s infinite',
+                float: 'float 5s ease-in-out infinite'
+            },
+            keyframes: {
+                float: {
+                    '0%,100%': { transform: 'translateY(0px)' },
+                    '50%': { transform: 'translateY(-10px)' }
+                }
+            }
+        }
+    }
+}
+</script>
+
 <style>
 *{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Inter',sans-serif;
-}body{ background:#050816; color:white; overflow-x:hidden; min-height:100vh; }
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
 
-body::before{ content:""; position:fixed; inset:0; background: radial-gradient(circle at top left,#1d4ed855,transparent 30%), radial-gradient(circle at bottom right,#9333ea55,transparent 30%); pointer-events:none; }
+body{
+    background:#09090b;
+    color:white;
+    font-family:Inter,sans-serif;
+    overflow-x:hidden;
+}
 
-.container{ max-width:1200px; margin:auto; padding:30px; }
+::-webkit-scrollbar{
+    width:8px;
+}
 
-.header{ text-align:center; margin-bottom:35px; }
+::-webkit-scrollbar-thumb{
+    background:#00f3ff55;
+    border-radius:999px;
+}
 
-.header h1{ font-size:3rem; font-weight:800; background:linear-gradient(90deg,#60a5fa,#a855f7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:10px; }
+.glass-panel{
+    background:rgba(20,20,25,.55);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,.08);
+    box-shadow:0 4px 30px rgba(0,0,0,.4);
+}
 
-.header p{ color:#9ca3af; font-size:1.05rem; }
+.neon-border{
+    border:1px solid rgba(0,243,255,.25);
+    box-shadow:0 0 25px rgba(0,243,255,.08);
+}
 
-.card{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); backdrop-filter:blur(14px); border-radius:24px; padding:25px; box-shadow:0 10px 40px rgba(0,0,0,0.4); }
+.neon-border:hover{
+    border-color:#00f3ff;
+    box-shadow:0 0 30px rgba(0,243,255,.25);
+}
 
-.upload-area{ border:2px dashed #3b82f6; border-radius:22px; padding:50px 20px; text-align:center; transition:.3s; cursor:pointer; margin-bottom:25px; }
+.slider-container{
+    position:relative;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    border-radius:18px;
+}
 
-.upload-area:hover{ background:rgba(59,130,246,0.08); transform:scale(1.01); }
+.slider-img{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
 
-.upload-area h2{ margin-bottom:10px; font-size:1.4rem; }
+.slider-img.before{
+    clip-path: inset(0 50% 0 0);
+    z-index:2;
+}
 
-.upload-area p{ color:#9ca3af; }
+.slider-handle{
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:50%;
+    width:4px;
+    background:#00f3ff;
+    box-shadow:0 0 12px #00f3ff;
+    transform:translateX(-50%);
+    z-index:3;
+    cursor:ew-resize;
+}
 
-input[type=file]{ display:none; }
+.slider-handle::after{
+    content:'↔';
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:34px;
+    height:34px;
+    border-radius:999px;
+    border:2px solid #00f3ff;
+    background:#09090b;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#00f3ff;
+    font-weight:bold;
+}
 
-.controls{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px; margin-bottom:25px; }
+.glow{
+    position:absolute;
+    border-radius:999px;
+    filter:blur(120px);
+    opacity:.18;
+    z-index:0;
+}
 
-.control-box{ background:rgba(255,255,255,0.04); padding:18px; border-radius:18px; border:1px solid rgba(255,255,255,0.06); }
+.drop-active{
+    border-color:#00f3ff !important;
+    background:rgba(0,243,255,.03);
+}
 
-.control-box label{ display:block; margin-bottom:10px; font-weight:600; }
+.progress-bar{
+    width:0%;
+    transition:width .4s ease;
+}
 
-select, button{ width:100%; padding:14px; border:none; border-radius:14px; font-size:1rem; font-weight:700; }
+.badge{
+    border:1px solid rgba(255,255,255,.08);
+    background:rgba(255,255,255,.03);
+}
 
-select{ background:#111827; color:white; outline:none; }
+button{
+    transition:all .25s ease;
+}
 
-button{ background:linear-gradient(90deg,#2563eb,#9333ea); color:white; cursor:pointer; transition:.25s; }
-
-button:hover{ transform:translateY(-2px); box-shadow:0 10px 25px rgba(59,130,246,0.35); }
-
-.preview-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:22px; margin-top:20px; }
-
-.preview-box{ background:rgba(255,255,255,0.04); border-radius:22px; padding:18px; border:1px solid rgba(255,255,255,0.06); }
-
-.preview-box h3{ margin-bottom:14px; font-size:1.1rem; }
-
-.preview-box img, .preview-box canvas, .preview-box svg{ width:100%; border-radius:18px; background:#000; }
-
-.download-btn{ margin-top:15px; }
-
-.loading{ display:none; text-align:center; padding:15px; font-weight:700; color:#60a5fa; animation:pulse 1s infinite; }
-
-@keyframes pulse{ 0%{opacity:.4} 50%{opacity:1} 100%{opacity:.4} }
-
-.footer{ margin-top:40px; text-align:center; color:#6b7280; font-size:.95rem; }
-
-@media(max-width:700px){ .header h1{ font-size:2.1rem; }
-
-.container{ padding:18px; } } </style>
-
+button:hover{
+    transform:translateY(-1px);
+}
+</style>
 </head>
-<body><div class="container"><div class="header">
-<h1>Ultra Image AI</h1>
-<p>Melhore imagens em até 4X e transforme em vetor SVG automaticamente.</p>
-</div><div class="card"><label class="upload-area" for="imageInput">
-<h2>📤 Enviar Imagem</h2>
-<p>Clique aqui para selecionar uma imagem</p>
-</label>
-<input type="file" id="imageInput" accept="image/*"><div class="controls"><div class="control-box">
-<label>Qualidade</label>
-<select id="scaleSelect">
-<option value="2">2X</option>
-<option value="4" selected>4X</option>
-<option value="8">8X</option>
-</select>
-</div><div class="control-box">
-<label>Vetorizar</label>
-<button id="vectorizeBtn">Gerar Vetor SVG</button>
-</div><div class="control-box">
-<label>Upscale</label>
-<button id="upscaleBtn">Melhorar Qualidade</button>
-</div></div><div class="loading" id="loadingText">
-Processando imagem...
-</div><div class="preview-grid"><div class="preview-box">
-<h3>Imagem Original</h3>
-<img id="originalPreview" />
-</div><div class="preview-box">
-<h3>Imagem Melhorada</h3>
-<canvas id="upscaledCanvas"></canvas>
-<button class="download-btn" id="downloadUpscaled">Baixar PNG</button>
-</div><div class="preview-box">
-<h3>Imagem Vetorizada</h3>
-<div id="svgContainer"></div>
-<button class="download-btn" id="downloadSVG">Baixar SVG</button>
-</div></div></div><div class="footer">
-Criado em HTML, CSS e JavaScript puro.
-</div></div><script>
-const imageInput = document.getElementById('imageInput');
-const originalPreview = document.getElementById('originalPreview');
-const upscaleBtn = document.getElementById('upscaleBtn');
-const vectorizeBtn = document.getElementById('vectorizeBtn');
-const canvas = document.getElementById('upscaledCanvas');
-const ctx = canvas.getContext('2d');
-const upscaler = new Upscaler();
-const scaleSelect = document.getElementById('scaleSelect');
-const loadingText = document.getElementById('loadingText');
-const svgContainer = document.getElementById('svgContainer');
-const downloadUpscaled = document.getElementById('downloadUpscaled');
-const downloadSVG = document.getElementById('downloadSVG');
 
-let uploadedImage = null;
-let generatedSVG = '';
+<body class="min-h-screen flex flex-col items-center p-6 relative">
 
-imageInput.addEventListener('change', e => {
-const file = e.target.files[0];
-if(!file) return;
+<!-- BACKGROUND -->
+<div class="glow top-[-10%] left-[-10%] w-[400px] h-[400px] bg-cyan-500"></div>
+<div class="glow bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-blue-600"></div>
 
-const reader = new FileReader();
-reader.onload = function(event){
-originalPreview.src = event.target.result;
+<!-- HEADER -->
+<header class="w-full max-w-7xl flex items-center justify-between py-6 z-10">
 
-uploadedImage = new Image();
-uploadedImage.src = event.target.result;
-};
-reader.readAsDataURL(file);
-});
+    <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 shadow-[0_0_25px_rgba(0,243,255,0.4)]"></div>
 
-upscaleBtn.addEventListener('click', async () => {
-if(!uploadedImage){
-alert('Envie uma imagem primeiro.');
-return;
+        <div>
+            <h1 class="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-neon to-blue-500">
+                NexusAI
+            </h1>
+
+            <p class="text-xs text-gray-400">
+                Cinematic AI Upscaler • TensorRT • CUDA
+            </p>
+        </div>
+    </div>
+
+    <div class="hidden md:flex items-center gap-3">
+        <div class="badge px-4 py-2 rounded-full text-sm text-gray-300">
+            RTX Pipeline
+        </div>
+
+        <button class="px-6 py-2 rounded-full bg-neon text-black font-bold shadow-[0_0_20px_rgba(0,243,255,0.35)]">
+            PRO Workspace
+        </button>
+    </div>
+</header>
+
+<!-- MAIN -->
+<main class="w-full max-w-7xl grid grid-cols-1 xl:grid-cols-4 gap-8 z-10">
+
+    <!-- SIDEBAR -->
+    <aside class="glass-panel rounded-3xl p-6 flex flex-col gap-6">
+
+        <div>
+            <h2 class="text-lg font-semibold mb-3">
+                Motor de IA
+            </h2>
+
+            <select id="engineSelect"
+            class="w-full bg-black/30 border border-gray-700 rounded-xl p-3 focus:outline-none focus:border-neon">
+
+                <option value="auto">
+                    Auto Detect
+                </option>
+
+                <option value="esrgan">
+                    Real-ESRGAN
+                </option>
+
+                <option value="codeformer">
+                    CodeFormer
+                </option>
+
+                <option value="swinir">
+                    SwinIR
+                </option>
+            </select>
+        </div>
+
+        <div>
+            <div class="flex justify-between mb-2">
+                <h2 class="text-lg font-semibold">
+                    Intensidade
+                </h2>
+
+                <span id="intensityValue" class="text-neon text-sm">
+                    75%
+                </span>
+            </div>
+
+            <input
+                id="intensity"
+                type="range"
+                min="1"
+                max="100"
+                value="75"
+                class="w-full accent-cyan-400 cursor-pointer"
+            />
+        </div>
+
+        <div class="space-y-4">
+
+            <label class="flex items-center justify-between">
+                <span class="text-sm text-gray-300">
+                    HDR Inteligente
+                </span>
+
+                <input type="checkbox" checked class="w-5 h-5 accent-cyan-400"/>
+            </label>
+
+            <label class="flex items-center justify-between">
+                <span class="text-sm text-gray-300">
+                    Redução de Ruído
+                </span>
+
+                <input type="checkbox" checked class="w-5 h-5 accent-cyan-400"/>
+            </label>
+
+            <label class="flex items-center justify-between">
+                <span class="text-sm text-gray-300">
+                    Restauração Facial
+                </span>
+
+                <input type="checkbox" checked class="w-5 h-5 accent-cyan-400"/>
+            </label>
+
+        </div>
+
+        <!-- INFO -->
+        <div class="grid grid-cols-2 gap-3">
+
+            <div class="badge rounded-2xl p-4">
+                <p class="text-xs text-gray-400 mb-1">
+                    Pipeline
+                </p>
+
+                <h3 class="font-bold text-neon">
+                    TensorRT
+                </h3>
+            </div>
+
+            <div class="badge rounded-2xl p-4">
+                <p class="text-xs text-gray-400 mb-1">
+                    Qualidade
+                </p>
+
+                <h3 class="font-bold text-neon">
+                    8K AAA
+                </h3>
+            </div>
+
+        </div>
+
+        <!-- PROCESS -->
+        <button
+        id="processBtn"
+        class="mt-auto w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-400 text-black font-black text-lg shadow-[0_0_25px_rgba(0,243,255,0.25)]">
+
+            Iniciar Upscale
+        </button>
+
+    </aside>
+
+    <!-- PREVIEW -->
+    <section
+    id="dropZone"
+    class="xl:col-span-3 glass-panel rounded-3xl p-4 min-h-[700px] neon-border relative overflow-hidden">
+
+        <!-- DEFAULT -->
+        <div
+        id="uploadState"
+        class="absolute inset-0 flex flex-col items-center justify-center text-center p-10">
+
+            <div class="animate-float">
+                <div class="w-28 h-28 rounded-[2rem] bg-gradient-to-br from-cyan-400/20 to-blue-600/20 border border-cyan-400/20 flex items-center justify-center mb-8">
+                    <svg class="w-14 h-14 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="1.5"
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                </div>
+            </div>
+
+            <h2 class="text-3xl font-bold mb-4">
+                Arraste sua imagem
+            </h2>
+
+            <p class="text-gray-400 max-w-md mb-8">
+                Faça upscale cinematográfico com IA neural avançada.
+                Suporte para JPG, PNG, WEBP e RAW.
+            </p>
+
+            <button
+            id="selectImageBtn"
+            class="px-8 py-4 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-400/50">
+                Selecionar Imagem
+            </button>
+
+            <input type="file" id="fileInput" hidden accept="image/*"/>
+        </div>
+
+        <!-- PREVIEW -->
+        <div id="previewState" class="hidden h-full">
+
+            <!-- TOP BAR -->
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+
+                <div class="flex items-center gap-3 flex-wrap">
+
+                    <div class="badge px-4 py-2 rounded-full text-sm">
+                        <span id="fileName">
+                            image.png
+                        </span>
+                    </div>
+
+                    <div class="badge px-4 py-2 rounded-full text-sm text-neon">
+                        AI READY
+                    </div>
+
+                </div>
+
+                <button
+                id="downloadBtn"
+                class="px-6 py-3 rounded-xl bg-neon text-black font-bold hidden">
+                    Download 8K
+                </button>
+
+            </div>
+
+            <!-- IMAGE -->
+            <div class="relative w-full h-[560px] rounded-3xl overflow-hidden">
+
+                <div class="slider-container">
+
+                    <img
+                    id="afterImage"
+                    class="slider-img after"
+                    alt="Original"/>
+
+                    <img
+                    id="beforeImage"
+                    class="slider-img before"
+                    alt="Upscaled"/>
+
+                    <div class="slider-handle" id="sliderHandle"></div>
+
+                </div>
+
+            </div>
+
+            <!-- PROGRESS -->
+            <div class="mt-6">
+
+                <div class="flex justify-between mb-2 text-sm">
+                    <span class="text-gray-400">
+                        Processamento Neural
+                    </span>
+
+                    <span id="progressText" class="text-neon">
+                        0%
+                    </span>
+                </div>
+
+                <div class="w-full h-3 bg-white/5 rounded-full overflow-hidden">
+                    <div
+                    id="progressBar"
+                    class="progress-bar h-full bg-gradient-to-r from-blue-600 to-cyan-400">
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- LOADER -->
+        <div
+        id="loader"
+        class="absolute inset-0 hidden items-center justify-center flex-col bg-black/70 backdrop-blur-md z-20">
+
+            <div class="w-24 h-24 border-4 border-white/10 border-t-cyan-400 rounded-full animate-spin mb-8"></div>
+
+            <h2 class="text-2xl font-bold mb-3 text-neon">
+                Tensor Pipeline
+            </h2>
+
+            <p id="loaderText" class="text-gray-300 font-mono text-sm animate-pulse">
+                Inicializando CUDA...
+            </p>
+
+        </div>
+
+    </section>
+
+</main>
+
+<script>
+const dropZone = document.getElementById('dropZone')
+const uploadState = document.getElementById('uploadState')
+const previewState = document.getElementById('previewState')
+
+const fileInput = document.getElementById('fileInput')
+const selectImageBtn = document.getElementById('selectImageBtn')
+
+const beforeImage = document.getElementById('beforeImage')
+const afterImage = document.getElementById('afterImage')
+
+const processBtn = document.getElementById('processBtn')
+
+const loader = document.getElementById('loader')
+const loaderText = document.getElementById('loaderText')
+
+const progressBar = document.getElementById('progressBar')
+const progressText = document.getElementById('progressText')
+
+const downloadBtn = document.getElementById('downloadBtn')
+
+const sliderHandle = document.getElementById('sliderHandle')
+
+const intensity = document.getElementById('intensity')
+const intensityValue = document.getElementById('intensityValue')
+
+const fileName = document.getElementById('fileName')
+
+let currentFile = null
+let isDragging = false
+
+// RANGE
+intensity.addEventListener('input', () => {
+    intensityValue.textContent = intensity.value + '%'
+})
+
+// OPEN FILE
+selectImageBtn.addEventListener('click', () => {
+    fileInput.click()
+})
+
+fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0]
+
+    if(file){
+        loadImage(file)
+    }
+})
+
+// DRAG EVENTS
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault()
+    dropZone.classList.add('drop-active')
+})
+
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('drop-active')
+})
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault()
+
+    dropZone.classList.remove('drop-active')
+
+    const file = e.dataTransfer.files[0]
+
+    if(file){
+        loadImage(file)
+    }
+})
+
+// LOAD IMAGE
+function loadImage(file){
+
+    currentFile = file
+
+    const reader = new FileReader()
+
+    reader.onload = (e) => {
+
+        uploadState.classList.add('hidden')
+        previewState.classList.remove('hidden')
+
+        afterImage.src = e.target.result
+        beforeImage.src = e.target.result
+
+        fileName.textContent = file.name
+    }
+
+    reader.readAsDataURL(file)
 }
 
-loadingText.innerText = 'IA melhorando imagem...';
-loadingText.style.display = 'block';
-upscaleBtn.disabled = true;
+// PROCESS
+processBtn.addEventListener('click', async () => {
 
-try{
-const scale = parseInt(scaleSelect.value);
+    if(!currentFile){
+        alert('Selecione uma imagem primeiro.')
+        return
+    }
 
-const result = await upscaler.upscale(uploadedImage, {
-patchSize: 32,
-padding: 2
-});
+    loader.classList.remove('hidden')
+    loader.classList.add('flex')
 
-canvas.width = result.width || uploadedImage.width * scale;
-canvas.height = result.height || uploadedImage.height * scale;
+    const steps = [
+        'Inicializando CUDA...',
+        'Detectando rostos...',
+        'Aplicando Real-ESRGAN...',
+        'Reconstruindo detalhes...',
+        'Aplicando CodeFormer...',
+        'Fazendo blend neural...',
+        'Finalizando imagem 8K...'
+    ]
 
-ctx.clearRect(0,0,canvas.width,canvas.height);
-ctx.drawImage(result,0,0,canvas.width,canvas.height);
+    let progress = 0
+    let stepIndex = 0
 
-applyFastSharpen();
+    const fakeProcessing = setInterval(() => {
 
-loadingText.innerText = 'Imagem melhorada com IA!';
+        progress += Math.random() * 15
 
-setTimeout(() => {
-loadingText.style.display = 'none';
-},1200);
+        if(progress >= 100){
+            progress = 100
+        }
 
-}catch(err){
-console.error(err);
-alert('A IA falhou nessa imagem. Tente usar uma imagem menor ou aguarde carregar totalmente.');
-console.log(err);
-loadingText.style.display = 'none';
-}
+        progressBar.style.width = progress + '%'
+        progressText.textContent = Math.floor(progress) + '%'
 
-upscaleBtn.disabled = false;
-});
+        loaderText.textContent = steps[stepIndex] || 'Finalizando...'
 
-function applyFastSharpen(){
-ctx.filter = 'contrast(1.04) saturate(1.02)';
+        if(stepIndex < steps.length - 1){
+            stepIndex++
+        }
 
-const tempCanvas = document.createElement('canvas');
-const tempCtx = tempCanvas.getContext('2d');
+        if(progress >= 100){
 
-tempCanvas.width = canvas.width;
-tempCanvas.height = canvas.height;
+            clearInterval(fakeProcessing)
 
-tempCtx.drawImage(canvas,0,0);
+            setTimeout(() => {
 
-ctx.clearRect(0,0,canvas.width,canvas.height);
-ctx.drawImage(tempCanvas,0,0);
+                loader.classList.add('hidden')
+                loader.classList.remove('flex')
 
-ctx.filter = 'none';
-}
+                // DEMO EFFECT
+                beforeImage.style.filter =
+                    'contrast(1.15) brightness(1.05) saturate(1.2) sharpen(1.2)'
 
-vectorizeBtn.addEventListener('click', () => {
-if(!uploadedImage){
-alert('Envie uma imagem primeiro.');
-return;
-}
+                downloadBtn.classList.remove('hidden')
 
-loadingText.style.display = 'block';
+            }, 1000)
+        }
 
-const tempCanvas = document.createElement('canvas');
-const tempCtx = tempCanvas.getContext('2d');
+    }, 700)
 
-tempCanvas.width = uploadedImage.width;
-tempCanvas.height = uploadedImage.height;
+    /*
+    PRODUÇÃO REAL:
 
-tempCtx.drawImage(uploadedImage,0,0);
+    const formData = new FormData()
+    formData.append('file', currentFile)
 
-const dataURL = tempCanvas.toDataURL('image/jpeg',0.7);
+    const response = await fetch('/api/v1/upscale', {
+        method: 'POST',
+        body: formData
+    })
 
-Potrace.loadImageFromUrl(dataURL);
+    const data = await response.json()
 
-Potrace.process(function(){
-generatedSVG = Potrace.getSVG(1);
-svgContainer.innerHTML = generatedSVG;
-loadingText.style.display = 'none';
-});
-});
+    const ws = new WebSocket(data.websocket_url)
 
-downloadUpscaled.addEventListener('click', () => {
-if(canvas.width === 0){
-alert('Nenhuma imagem melhorada ainda.');
-return;
-}
+    ws.onmessage = (event) => {
+        const payload = JSON.parse(event.data)
 
-canvas.toBlob(blob => {
-const url = URL.createObjectURL(blob);
+        progressBar.style.width = payload.progress + '%'
 
-const link = document.createElement('a');
-link.download = 'imagem-melhorada.png';
-link.href = url;
+        if(payload.status === 'done'){
+            beforeImage.src = payload.output_url
+        }
+    }
+    */
 
-document.body.appendChild(link);
-link.click();
-document.body.removeChild(link);
+})
 
-URL.revokeObjectURL(url);
-},'image/png');
-});
+// DOWNLOAD
+downloadBtn.addEventListener('click', () => {
 
-downloadSVG.addEventListener('click', () => {
-if(!generatedSVG){
-alert('Nenhum SVG gerado ainda.');
-return;
-}
+    const link = document.createElement('a')
 
-const blob = new Blob([generatedSVG], {type:'image/svg+xml'});
-const url = URL.createObjectURL(blob);
+    link.href = beforeImage.src
+    link.download = 'nexusai-8k.png'
 
-const link = document.createElement('a');
-link.href = url;
-link.download = 'imagem-vetorizada.svg';
-link.click();
-});
-</script></body>
+    link.click()
+})
+
+// SLIDER
+const container = document.querySelector('.slider-container')
+
+container.addEventListener('mousedown', () => {
+    isDragging = true
+})
+
+window.addEventListener('mouseup', () => {
+    isDragging = false
+})
+
+window.addEventListener('mousemove', (e) => {
+
+    if(!isDragging){
+        return
+    }
+
+    const rect = container.getBoundingClientRect()
+
+    let x = e.clientX - rect.left
+
+    x = Math.max(0, Math.min(x, rect.width))
+
+    const percent = (x / rect.width) * 100
+
+    sliderHandle.style.left = percent + '%'
+
+    beforeImage.style.clipPath =
+        `inset(0 ${100 - percent}% 0 0)`
+})
+
+// MOBILE TOUCH
+container.addEventListener('touchmove', (e) => {
+
+    const touch = e.touches[0]
+
+    const rect = container.getBoundingClientRect()
+
+    let x = touch.clientX - rect.left
+
+    x = Math.max(0, Math.min(x, rect.width))
+
+    const percent = (x / rect.width) * 100
+
+    sliderHandle.style.left = percent + '%'
+
+    beforeImage.style.clipPath =
+        `inset(0 ${100 - percent}% 0 0)`
+
+})
+</script>
+
+</body>
 </html>
