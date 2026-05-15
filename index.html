@@ -1,116 +1,384 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-BR">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport"
-      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-
-<title>NexusAI Ultra Pro X</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+<title>NeuroEnhance AI</title>
 
 <style>
 
-:root{
-    --bg:#050505;
-    --panel:rgba(15,15,18,.78);
-    --cyan:#00e5ff;
-    --blue:#0066ff;
+/* =========================
+   RESET
+========================= */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
 }
 
-html,
-body{
-    margin:0;
+html,body{
     width:100%;
     height:100%;
     overflow:hidden;
-    background:var(--bg);
-    color:white;
-    font-family:Inter,sans-serif;
+    background:#05070d;
+    font-family:Inter,system-ui,sans-serif;
+    color:#fff;
 }
 
-body{
+/* =========================
+   ROOT
+========================= */
+
+:root{
+    --bg:#05070d;
+    --card:rgba(255,255,255,.06);
+    --border:rgba(255,255,255,.08);
+    --neon:#00ffe1;
+    --neon2:#5d8bff;
+    --text:#eaf2ff;
+    --muted:#9da8bc;
+    --shadow:0 0 30px rgba(0,255,225,.12);
+}
+
+/* =========================
+   APP
+========================= */
+
+.app{
     display:flex;
     flex-direction:column;
+    height:100vh;
+    overflow:hidden;
 }
 
-.glass{
-    background:var(--panel);
-    backdrop-filter:blur(24px);
-    border:1px solid rgba(255,255,255,.07);
+/* =========================
+   TOPBAR
+========================= */
+
+.topbar{
+    padding:16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    backdrop-filter:blur(20px);
+    background:rgba(255,255,255,.03);
+    border-bottom:1px solid var(--border);
+    z-index:10;
+}
+
+.logo{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.logo-glow{
+    width:14px;
+    height:14px;
+    border-radius:50%;
+    background:var(--neon);
+    box-shadow:
+        0 0 10px var(--neon),
+        0 0 25px var(--neon);
+}
+
+.logo h1{
+    font-size:18px;
+    letter-spacing:1px;
+    font-weight:700;
+}
+
+/* =========================
+   MAIN
+========================= */
+
+.main{
+    flex:1;
+    overflow:auto;
+    padding-bottom:120px;
+}
+
+/* =========================
+   PREVIEW
+========================= */
+
+.preview-wrapper{
+    position:relative;
+    width:100%;
+    height:52vh;
+    overflow:hidden;
+    background:#000;
 }
 
 canvas{
-    image-rendering:auto;
-}
-
-#viewer{
-    position:relative;
     width:100%;
     height:100%;
-    overflow:hidden;
-    background:#000;
-    border-radius:28px;
+    display:block;
 }
 
-.layer{
-    position:absolute;
-    inset:0;
-    width:100%;
-    height:100%;
-    object-fit:contain;
-}
-
-#slider{
+.split-line{
     position:absolute;
     top:0;
     bottom:0;
-    width:2px;
+    width:3px;
+    background:#fff;
     left:50%;
-    z-index:60;
-    background:var(--cyan);
     transform:translateX(-50%);
-    box-shadow:0 0 18px var(--cyan);
+    box-shadow:0 0 20px rgba(255,255,255,.7);
+    pointer-events:none;
 }
 
-#slider::after{
-    content:'◂ ▸';
+.split-handle{
     position:absolute;
     top:50%;
     left:50%;
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.2);
     transform:translate(-50%,-50%);
-    background:#000;
-    border:1px solid var(--cyan);
-    color:var(--cyan);
-    border-radius:12px;
-    padding:8px 10px;
-    font-size:11px;
-    white-space:nowrap;
+    backdrop-filter:blur(12px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-size:18px;
+    box-shadow:var(--shadow);
 }
 
-.range{
+/* =========================
+   PANEL
+========================= */
+
+.panel{
+    padding:18px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+}
+
+.card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:24px;
+    padding:18px;
+    backdrop-filter:blur(18px);
+    box-shadow:var(--shadow);
+}
+
+.card-title{
+    margin-bottom:14px;
+    font-size:14px;
+    letter-spacing:.5px;
+    color:var(--muted);
+}
+
+/* =========================
+   UPLOAD
+========================= */
+
+.upload-zone{
+    height:120px;
+    border-radius:20px;
+    border:2px dashed rgba(255,255,255,.14);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:20px;
+    transition:.25s;
+    position:relative;
+    overflow:hidden;
+}
+
+.upload-zone.active{
+    border-color:var(--neon);
+    box-shadow:0 0 30px rgba(0,255,225,.15);
+}
+
+.upload-zone input{
+    position:absolute;
+    inset:0;
+    opacity:0;
+}
+
+.upload-content{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+
+.upload-title{
+    font-size:15px;
+    font-weight:600;
+}
+
+.upload-sub{
+    font-size:12px;
+    color:var(--muted);
+}
+
+/* =========================
+   CONTROLS
+========================= */
+
+.control{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-bottom:18px;
+}
+
+.control-top{
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+}
+
+.control-value{
+    color:var(--neon);
+    font-weight:700;
+}
+
+.slider{
+    -webkit-appearance:none;
+    appearance:none;
     width:100%;
-    accent-color:var(--cyan);
+    height:6px;
+    border-radius:999px;
+    background:linear-gradient(90deg,var(--neon),var(--neon2));
+    outline:none;
 }
 
-.progressGlow{
+.slider::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:24px;
+    height:24px;
+    border-radius:50%;
+    background:#fff;
+    border:4px solid var(--neon);
+    box-shadow:0 0 20px rgba(0,255,225,.5);
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.row{
+    display:flex;
+    gap:12px;
+}
+
+.btn{
+    flex:1;
+    border:none;
+    border-radius:18px;
+    padding:16px;
+    color:#fff;
+    font-weight:700;
+    font-size:14px;
+    background:linear-gradient(135deg,var(--neon),var(--neon2));
     box-shadow:
-        0 0 12px rgba(0,229,255,.7),
-        0 0 30px rgba(0,229,255,.4);
-}
-
-button{
+        0 0 25px rgba(0,255,225,.18);
     transition:.2s;
 }
 
-button:active{
-    transform:scale(.985);
+.btn:active{
+    transform:scale(.96);
 }
 
-.tileDebug{
+/* =========================
+   LOADING
+========================= */
+
+.loading{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.65);
+    backdrop-filter:blur(20px);
+    z-index:999;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    gap:20px;
+}
+
+.loading.active{
+    display:flex;
+}
+
+.loader{
+    width:90px;
+    height:90px;
+    border-radius:50%;
+    border:4px solid rgba(255,255,255,.08);
+    border-top:4px solid var(--neon);
+    animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+    to{
+        transform:rotate(360deg);
+    }
+}
+
+.progress{
+    width:220px;
+    height:10px;
+    border-radius:999px;
+    background:rgba(255,255,255,.08);
+    overflow:hidden;
+}
+
+.progress-bar{
+    width:0%;
+    height:100%;
+    background:linear-gradient(90deg,var(--neon),var(--neon2));
+    transition:.2s;
+}
+
+/* =========================
+   BADGE
+========================= */
+
+.badges{
+    display:flex;
+    gap:8px;
+    overflow:auto;
+}
+
+.badge{
+    padding:10px 14px;
+    border-radius:999px;
+    background:rgba(255,255,255,.06);
+    white-space:nowrap;
+    border:1px solid rgba(255,255,255,.08);
+    font-size:12px;
+}
+
+.badge.active{
+    background:linear-gradient(135deg,var(--neon),var(--neon2));
+    color:#000;
+    font-weight:700;
+}
+
+/* =========================
+   FPS
+========================= */
+
+.fps{
     position:absolute;
-    border:1px solid rgba(0,255,255,.08);
-    pointer-events:none;
+    top:14px;
+    right:14px;
+    background:rgba(0,0,0,.4);
+    padding:8px 12px;
+    border-radius:999px;
+    font-size:11px;
+    backdrop-filter:blur(10px);
 }
 
 </style>
@@ -118,1236 +386,690 @@ button:active{
 
 <body>
 
-<!-- HEADER -->
-<header class="shrink-0 border-b border-white/10 px-5 py-4 flex items-center justify-between">
+<div class="app">
 
-    <div>
+    <div class="topbar">
+        <div class="logo">
+            <div class="logo-glow"></div>
+            <h1>NeuroEnhance AI</h1>
+        </div>
 
-        <h1 class="text-2xl font-black tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-            NexusAI Ultra Pro X
-        </h1>
+        <div style="font-size:12px;color:var(--muted)">
+            Real-Time Neural Enhancement
+        </div>
+    </div>
 
-        <div class="text-xs text-zinc-500">
-            ESRGAN-Like Super Resolution Engine
+    <div class="main">
+
+        <div class="preview-wrapper">
+
+            <canvas id="glCanvas"></canvas>
+
+            <div class="split-line" id="splitLine"></div>
+
+            <div class="split-handle" id="splitHandle">
+                ⇆
+            </div>
+
+            <div class="fps" id="fps">0 FPS</div>
+
+        </div>
+
+        <div class="panel">
+
+            <div class="card">
+
+                <div class="card-title">
+                    Upload de imagem
+                </div>
+
+                <div class="upload-zone" id="dropZone">
+
+                    <input type="file" id="upload" accept="image/png,image/jpeg,image/webp">
+
+                    <div class="upload-content">
+                        <div class="upload-title">
+                            Toque ou arraste sua imagem
+                        </div>
+
+                        <div class="upload-sub">
+                            PNG • JPG • WEBP
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="card">
+
+                <div class="card-title">
+                    Presets neurais
+                </div>
+
+                <div class="badges">
+
+                    <div class="badge active" data-preset="real">
+                        Foto Real
+                    </div>
+
+                    <div class="badge" data-preset="anime">
+                        Anime
+                    </div>
+
+                    <div class="badge" data-preset="retro">
+                        Retro
+                    </div>
+
+                    <div class="badge" data-preset="rescue">
+                        Low Quality Rescue
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="card">
+
+                <div class="card-title">
+                    Ajustes avançados
+                </div>
+
+                <div id="controls"></div>
+
+            </div>
+
+            <div class="row">
+
+                <button class="btn" id="enhanceBtn">
+                    AI Enhance
+                </button>
+
+                <button class="btn" id="saveBtn">
+                    Exportar
+                </button>
+
+            </div>
+
         </div>
 
     </div>
 
-    <div class="flex gap-2 items-center">
+</div>
 
-        <div id="ramBadge"
-             class="px-3 py-1 rounded-full text-xs bg-zinc-900 border border-white/10 text-zinc-300">
-            RAM --
-        </div>
+<div class="loading" id="loading">
 
-        <div id="backendBadge"
-             class="px-3 py-1 rounded-full text-xs bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">
-            Detectando...
-        </div>
+    <div class="loader"></div>
 
+    <div>Processando IA Neural...</div>
+
+    <div class="progress">
+        <div class="progress-bar" id="progressBar"></div>
     </div>
 
-</header>
-
-<!-- MAIN -->
-<main class="flex-1 overflow-hidden flex flex-col lg:flex-row gap-4 p-4">
-
-    <!-- SIDEBAR -->
-    <aside class="glass rounded-3xl p-5 w-full lg:w-80 shrink-0 flex flex-col gap-5 overflow-auto">
-
-        <!-- SCALE -->
-        <div>
-
-            <div class="text-xs uppercase text-zinc-500 mb-2">
-                Escala
-            </div>
-
-            <div class="grid grid-cols-2 gap-2">
-
-                <button class="scaleBtn bg-cyan-500 text-black font-bold rounded-2xl py-3"
-                        data-scale="2">
-                    2X
-                </button>
-
-                <button class="scaleBtn bg-zinc-900 text-zinc-400 rounded-2xl py-3"
-                        data-scale="4">
-                    4X
-                </button>
-
-            </div>
-
-        </div>
-
-        <!-- DETAIL -->
-        <div>
-
-            <div class="text-xs uppercase text-zinc-500 mb-2">
-                Detail Recovery
-            </div>
-
-            <input id="detailRange"
-                   class="range"
-                   type="range"
-                   min="0"
-                   max="2"
-                   step="0.01"
-                   value="1.1">
-
-        </div>
-
-        <!-- SHARP -->
-        <div>
-
-            <div class="text-xs uppercase text-zinc-500 mb-2">
-                Adaptive Sharpen
-            </div>
-
-            <input id="sharpRange"
-                   class="range"
-                   type="range"
-                   min="0"
-                   max="2"
-                   step="0.01"
-                   value="0.88">
-
-        </div>
-
-        <!-- DENOISE -->
-        <div>
-
-            <div class="text-xs uppercase text-zinc-500 mb-2">
-                Smart Denoise
-            </div>
-
-            <input id="denoiseRange"
-                   class="range"
-                   type="range"
-                   min="0"
-                   max="1"
-                   step="0.01"
-                   value="0.18">
-
-        </div>
-
-        <!-- VIBRANCE -->
-        <div>
-
-            <div class="text-xs uppercase text-zinc-500 mb-2">
-                Vibrance
-            </div>
-
-            <input id="vibranceRange"
-                   class="range"
-                   type="range"
-                   min="1"
-                   max="1.4"
-                   step="0.01"
-                   value="1.08">
-
-        </div>
-
-        <!-- FORMAT -->
-        <div>
-
-            <div class="text-xs uppercase text-zinc-500 mb-2">
-                Export
-            </div>
-
-            <select id="formatSelect"
-                    class="w-full bg-zinc-950 border border-white/10 rounded-2xl p-3">
-
-                <option value="image/png">
-                    PNG
-                </option>
-
-                <option value="image/jpeg">
-                    JPEG
-                </option>
-
-                <option value="image/webp">
-                    WEBP
-                </option>
-
-            </select>
-
-        </div>
-
-        <!-- BUTTONS -->
-        <div class="flex flex-col gap-3">
-
-            <button id="startBtn"
-                    class="bg-white text-black font-bold rounded-2xl py-4">
-                Iniciar AI Upscale
-            </button>
-
-            <button id="cancelBtn"
-                    class="hidden bg-red-500/10 border border-red-500/30 text-red-300 rounded-2xl py-3">
-                Cancelar
-            </button>
-
-            <button id="downloadBtn"
-                    class="hidden bg-cyan-500 text-black font-bold rounded-2xl py-4">
-                Baixar
-            </button>
-
-        </div>
-
-        <!-- PROGRESS -->
-        <div>
-
-            <div class="flex justify-between text-xs mb-2">
-
-                <div id="statusText"
-                     class="text-cyan-300">
-                    Aguardando imagem
-                </div>
-
-                <div id="progressText">
-                    0%
-                </div>
-
-            </div>
-
-            <div class="w-full h-2 bg-zinc-900 rounded-full overflow-hidden">
-
-                <div id="progressBar"
-                     class="h-full w-0 bg-cyan-400 progressGlow transition-all duration-300">
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- INFO -->
-        <div class="text-xs text-zinc-500 leading-relaxed">
-
-            • Multi-frequency pipeline<br>
-            • Edge-aware reconstruction<br>
-            • Tile overlap blending<br>
-            • Adaptive sharpen<br>
-            • Anti-halo processing<br>
-            • Texture recovery<br>
-            • Android VRAM protection<br>
-            • OffscreenCanvas optimized<br>
-            • Worker accelerated<br>
-            • ESRGAN-like enhancement
-
-        </div>
-
-    </aside>
-
-    <!-- VIEWER -->
-    <section class="flex-1 glass rounded-3xl overflow-hidden relative">
-
-        <!-- UPLOAD -->
-        <div id="uploadUI"
-             class="absolute inset-0 z-50 flex items-center justify-center p-6">
-
-            <label for="fileInput"
-                   class="w-full h-full border-2 border-dashed border-zinc-700 rounded-3xl bg-black/30 flex flex-col items-center justify-center cursor-pointer">
-
-                <div class="text-center pointer-events-none">
-
-                    <div class="text-6xl mb-4">
-                        ⬆
-                    </div>
-
-                    <div class="font-bold text-xl">
-                        Selecione sua imagem
-                    </div>
-
-                    <div class="text-zinc-500 text-sm mt-2">
-                        PNG • JPG • WEBP
-                    </div>
-
-                </div>
-
-            </label>
-
-            <input id="fileInput"
-                   type="file"
-                   class="hidden"
-                   accept="image/png,image/jpeg,image/webp">
-
-        </div>
-
-        <!-- VIEW -->
-        <div id="viewer"
-             class="hidden">
-
-            <img id="originalImage"
-                 class="layer">
-
-            <canvas id="upscaledCanvas"
-                    class="layer"></canvas>
-
-            <div id="slider"></div>
-
-        </div>
-
-    </section>
-
-</main>
-
-<script type="module">
-
-/* =========================================================
-   ELEMENTS
-========================================================= */
-
-const fileInput =
-document.getElementById('fileInput');
-
-const uploadUI =
-document.getElementById('uploadUI');
-
-const viewer =
-document.getElementById('viewer');
-
-const originalImage =
-document.getElementById('originalImage');
-
-const upscaledCanvas =
-document.getElementById('upscaledCanvas');
-
-const slider =
-document.getElementById('slider');
-
-const startBtn =
-document.getElementById('startBtn');
-
-const cancelBtn =
-document.getElementById('cancelBtn');
-
-const downloadBtn =
-document.getElementById('downloadBtn');
-
-const progressBar =
-document.getElementById('progressBar');
-
-const progressText =
-document.getElementById('progressText');
-
-const statusText =
-document.getElementById('statusText');
-
-const backendBadge =
-document.getElementById('backendBadge');
-
-const ramBadge =
-document.getElementById('ramBadge');
-
-const detailRange =
-document.getElementById('detailRange');
-
-const sharpRange =
-document.getElementById('sharpRange');
-
-const denoiseRange =
-document.getElementById('denoiseRange');
-
-const vibranceRange =
-document.getElementById('vibranceRange');
-
-const formatSelect =
-document.getElementById('formatSelect');
-
-const scaleBtns =
-document.querySelectorAll('.scaleBtn');
-
-/* =========================================================
-   STATE
-========================================================= */
-
-let bitmap = null;
-let processing = false;
-let worker = null;
-let currentScale = 2;
-let backend = '2d';
-
-/* =========================================================
-   BACKEND DETECTION
-========================================================= */
-
-async function detectBackend(){
-
-    if('gpu' in navigator){
-
-        backendBadge.textContent =
-        'WebGPU';
-
-        backend =
-        'webgpu';
-
-        return;
-    }
-
-    const canvas =
-    document.createElement('canvas');
-
-    if(canvas.getContext('webgl2')){
-
-        backendBadge.textContent =
-        'WebGL2';
-
-        backend =
-        'webgl2';
-
-        return;
-    }
-
-    backendBadge.textContent =
-    'Canvas SIMD';
-
-    backend =
-    '2d';
-}
-
-detectBackend();
-
-ramBadge.textContent =
-'RAM ' + (navigator.deviceMemory || 2) + 'GB';
-
-/* =========================================================
-   SCALE
-========================================================= */
-
-scaleBtns.forEach(btn=>{
-
-    btn.addEventListener('click',()=>{
-
-        scaleBtns.forEach(b=>{
-
-            b.className =
-            'scaleBtn bg-zinc-900 text-zinc-400 rounded-2xl py-3';
-        });
-
-        btn.className =
-        'scaleBtn bg-cyan-500 text-black font-bold rounded-2xl py-3';
-
-        currentScale =
-        Number(btn.dataset.scale);
-
-    });
-
+</div>
+
+<script>
+
+/* ============================================
+   NEURO ENHANCE AI
+============================================ */
+
+const canvas = document.getElementById("glCanvas");
+const gl = canvas.getContext("webgl2", {
+    antialias:true,
+    preserveDrawingBuffer:true,
+    powerPreference:"high-performance"
 });
 
-/* =========================================================
-   LOAD FILE
-========================================================= */
-
-fileInput.addEventListener('change', async e=>{
-
-    const file =
-    e.target.files[0];
-
-    if(!file) return;
-
-    bitmap?.close?.();
-
-    bitmap =
-    await createImageBitmap(file);
-
-    const url =
-    URL.createObjectURL(file);
-
-    originalImage.src =
-    url;
-
-    uploadUI.classList.add('hidden');
-
-    viewer.classList.remove('hidden');
-
-    statusText.textContent =
-    'Imagem carregada';
-
-});
-
-/* =========================================================
-   START
-========================================================= */
-
-startBtn.addEventListener('click',()=>{
-
-    if(!bitmap || processing) return;
-
-    processing = true;
-
-    startBtn.disabled = true;
-
-    cancelBtn.classList.remove('hidden');
-
-    startProcessing();
-
-});
-
-/* =========================================================
-   CANCEL
-========================================================= */
-
-cancelBtn.addEventListener('click',()=>{
-
-    worker?.terminate();
-
-    cleanup();
-
-});
-
-/* =========================================================
-   PROCESS
-========================================================= */
-
-async function startProcessing(){
-
-    updateProgress(2,'Inicializando IA');
-
-    const blob =
-    new Blob([workerCode()],{
-        type:'application/javascript'
-    });
-
-    worker =
-    new Worker(URL.createObjectURL(blob));
-
-    worker.onmessage =
-    async e=>{
-
-        const data = e.data;
-
-        if(data.type === 'progress'){
-
-            updateProgress(
-                data.progress,
-                data.status
-            );
-        }
-
-        if(data.type === 'done'){
-
-            await renderFinal(
-                data.bitmap
-            );
-
-            cleanup();
-        }
-
-        if(data.type === 'error'){
-
-            console.error(data.error);
-
-            cleanup();
-        }
-
-    };
-
-    worker.postMessage({
-
-        type:'start',
-
-        bitmap,
-
-        scale:currentScale,
-
-        backend,
-
-        settings:{
-
-            detail:
-            Number(detailRange.value),
-
-            sharp:
-            Number(sharpRange.value),
-
-            denoise:
-            Number(denoiseRange.value),
-
-            vibrance:
-            Number(vibranceRange.value)
-        },
-
-        memory:
-        navigator.deviceMemory || 2
-
-    },[bitmap]);
-
-}
-
-/* =========================================================
-   RENDER FINAL
-========================================================= */
-
-async function renderFinal(resultBitmap){
-
-    updateProgress(
-        90,
-        'Reconstruindo detalhes'
-    );
-
-    const ctx =
-    upscaledCanvas.getContext('2d',{
-        alpha:false,
-        desynchronized:true
-    });
-
-    upscaledCanvas.width =
-    resultBitmap.width;
-
-    upscaledCanvas.height =
-    resultBitmap.height;
-
-    ctx.drawImage(
-        resultBitmap,
-        0,
-        0
-    );
-
-    resultBitmap.close?.();
-
-    await adaptiveSharpen(ctx);
-
-    await localContrast(ctx);
-
-    await colorRecovery(ctx);
-
-    enableCompare();
-
-    downloadBtn.classList.remove('hidden');
-
-    updateProgress(
-        100,
-        'Concluído'
-    );
-
-}
-
-/* =========================================================
-   ADAPTIVE SHARPEN
-========================================================= */
-
-async function adaptiveSharpen(ctx){
-
-    const w =
-    ctx.canvas.width;
-
-    const h =
-    ctx.canvas.height;
-
-    const amount =
-    Number(sharpRange.value);
-
-    const temp =
-    new OffscreenCanvas(w,h);
-
-    const tctx =
-    temp.getContext('2d');
-
-    tctx.drawImage(
-        ctx.canvas,
-        0,
-        0
-    );
-
-    ctx.filter =
-    'blur(0.45px)';
-
-    ctx.drawImage(
-        temp,
-        0,
-        0
-    );
-
-    ctx.globalCompositeOperation =
-    'overlay';
-
-    ctx.globalAlpha =
-    .55 * amount;
-
-    ctx.drawImage(
-        temp,
-        0,
-        0
-    );
-
-    ctx.globalCompositeOperation =
-    'source-over';
-
-    ctx.globalAlpha =
-    1;
-
-    ctx.filter =
-    'none';
-
-    await yieldThread();
-}
-
-/* =========================================================
-   LOCAL CONTRAST
-========================================================= */
-
-async function localContrast(ctx){
-
-    const temp =
-    new OffscreenCanvas(
-        ctx.canvas.width,
-        ctx.canvas.height
-    );
-
-    const tctx =
-    temp.getContext('2d');
-
-    tctx.drawImage(
-        ctx.canvas,
-        0,
-        0
-    );
-
-    ctx.globalCompositeOperation =
-    'soft-light';
-
-    ctx.globalAlpha =
-    .22;
-
-    ctx.filter =
-    'contrast(1.12)';
-
-    ctx.drawImage(
-        temp,
-        0,
-        0
-    );
-
-    ctx.globalCompositeOperation =
-    'source-over';
-
-    ctx.globalAlpha =
-    1;
-
-    ctx.filter =
-    'none';
-
-    await yieldThread();
-}
-
-/* =========================================================
-   COLOR RECOVERY
-========================================================= */
-
-async function colorRecovery(ctx){
-
-    const vibrance =
-    Number(vibranceRange.value);
-
-    ctx.filter =
-    `saturate(${vibrance})
-     contrast(1.03)
-     brightness(1.01)`;
-
-    ctx.drawImage(
-        ctx.canvas,
-        0,
-        0
-    );
-
-    ctx.filter =
-    'none';
-
-    await yieldThread();
-}
-
-/* =========================================================
-   DOWNLOAD
-========================================================= */
-
-downloadBtn.addEventListener('click',()=>{
-
-    const type =
-    formatSelect.value;
-
-    upscaledCanvas.toBlob(blob=>{
-
-        const url =
-        URL.createObjectURL(blob);
-
-        const a =
-        document.createElement('a');
-
-        a.href =
-        url;
-
-        a.download =
-        `NexusAI_${currentScale}x.${
-            type.includes('png')
-            ? 'png'
-            : type.includes('webp')
-            ? 'webp'
-            : 'jpg'
-        }`;
-
-        a.click();
-
-        setTimeout(()=>{
-
-            URL.revokeObjectURL(url);
-
-        },1500);
-
-    },type,.96);
-
-});
-
-/* =========================================================
-   SLIDER
-========================================================= */
-
-let dragging = false;
-
-slider.addEventListener(
-'mousedown',
-()=>dragging=true
-);
-
-window.addEventListener(
-'mouseup',
-()=>dragging=false
-);
-
-window.addEventListener(
-'mousemove',
-moveSlider
-);
-
-slider.addEventListener(
-'touchstart',
-()=>dragging=true,
-{passive:true}
-);
-
-window.addEventListener(
-'touchend',
-()=>dragging=false
-);
-
-window.addEventListener(
-'touchmove',
-moveSlider,
-{passive:true}
-);
-
-function moveSlider(e){
-
-    if(!dragging) return;
-
-    const rect =
-    viewer.getBoundingClientRect();
-
-    const clientX =
-    e.touches
-    ? e.touches[0].clientX
-    : e.clientX;
-
-    let x =
-    clientX - rect.left;
-
-    x =
-    Math.max(
-        0,
-        Math.min(rect.width,x)
-    );
-
-    const percent =
-    x / rect.width * 100;
-
-    slider.style.left =
-    percent + '%';
-
-    originalImage.style.clipPath =
-    `polygon(
-        0 0,
-        ${percent}% 0,
-        ${percent}% 100%,
-        0 100%
-    )`;
-
-    upscaledCanvas.style.clipPath =
-    `polygon(
-        ${percent}% 0,
-        100% 0,
-        100% 100%,
-        ${percent}% 100%
-    )`;
-
-}
-
-function enableCompare(){
-
-    originalImage.style.clipPath =
-    'polygon(0 0,50% 0,50% 100%,0 100%)';
-
-    upscaledCanvas.style.clipPath =
-    'polygon(50% 0,100% 0,100% 100%,50% 100%)';
-}
-
-/* =========================================================
-   PROGRESS
-========================================================= */
-
-function updateProgress(v,t){
-
-    requestAnimationFrame(()=>{
-
-        progressBar.style.width =
-        v + '%';
-
-        progressText.textContent =
-        Math.round(v) + '%';
-
-        statusText.textContent =
-        t;
-
-    });
-
-}
-
-/* =========================================================
-   CLEANUP
-========================================================= */
-
-function cleanup(){
-
-    processing = false;
-
-    startBtn.disabled = false;
-
-    cancelBtn.classList.add('hidden');
-
-    worker?.terminate();
-
-    worker = null;
-
-}
-
-/* =========================================================
-   UTILS
-========================================================= */
-
-function yieldThread(){
-
-    return new Promise(r=>
-        setTimeout(r,0)
-    );
-
-}
-
-/* =========================================================
-   WORKER CODE
-========================================================= */
-
-function workerCode(){
-
-return `
-
-let cancelled = false;
-
-self.onmessage = async e=>{
-
-    const data = e.data;
-
-    if(data.type !== 'start') return;
-
-    try{
-
-        const bitmap =
-        data.bitmap;
-
-        const scale =
-        data.scale;
-
-        const settings =
-        data.settings;
-
-        const memory =
-        data.memory;
-
-        const overlap =
-        24;
-
-        const tileSize =
-            memory <= 2 ? 128 :
-            memory <= 4 ? 192 :
-            256;
-
-        const outW =
-        bitmap.width * scale;
-
-        const outH =
-        bitmap.height * scale;
-
-        const canvas =
-        new OffscreenCanvas(
-            outW,
-            outH
-        );
-
-        const ctx =
-        canvas.getContext('2d',{
-            alpha:false,
-            desynchronized:true
-        });
-
-        ctx.imageSmoothingEnabled =
-        true;
-
-        ctx.imageSmoothingQuality =
-        'high';
-
-        const totalX =
-        Math.ceil(bitmap.width / tileSize);
-
-        const totalY =
-        Math.ceil(bitmap.height / tileSize);
-
-        const total =
-        totalX * totalY;
-
-        let done = 0;
-
-        self.postMessage({
-            type:'progress',
-            progress:4,
-            status:'Analisando frequências'
-        });
-
-        for(let ty=0; ty<totalY; ty++){
-
-            for(let tx=0; tx<totalX; tx++){
-
-                if(cancelled) return;
-
-                const x =
-                tx * tileSize;
-
-                const y =
-                ty * tileSize;
-
-                const sx =
-                Math.max(0,x-overlap);
-
-                const sy =
-                Math.max(0,y-overlap);
-
-                const sw =
-                Math.min(
-                    tileSize + overlap*2,
-                    bitmap.width - sx
-                );
-
-                const sh =
-                Math.min(
-                    tileSize + overlap*2,
-                    bitmap.height - sy
-                );
-
-                const tile =
-                new OffscreenCanvas(sw,sh);
-
-                const tctx =
-                tile.getContext('2d',{
-                    willReadFrequently:true
-                });
-
-                tctx.drawImage(
-                    bitmap,
-                    sx,
-                    sy,
-                    sw,
-                    sh,
-                    0,
-                    0,
-                    sw,
-                    sh
-                );
-
-                /* ==========================================
-                   MULTI FREQUENCY PROCESSING
-                ========================================== */
-
-                let img =
-                tctx.getImageData(
-                    0,
-                    0,
-                    sw,
-                    sh
-                );
-
-                let d =
-                img.data;
-
-                /* ==========================================
-                   EDGE-AWARE DETAIL RECOVERY
-                ========================================== */
-
-                for(let py=1; py<sh-1; py++){
-
-                    for(let px=1; px<sw-1; px++){
-
-                        const i =
-                        (py * sw + px) * 4;
-
-                        const l =
-                        i - 4;
-
-                        const r =
-                        i + 4;
-
-                        const u =
-                        i - sw*4;
-
-                        const b =
-                        i + sw*4;
-
-                        const lum =
-                        (d[i]+d[i+1]+d[i+2])*.333;
-
-                        const edge =
-                        Math.abs(lum - (
-                            d[l]+d[l+1]+d[l+2]
-                        )*.333)
-                        +
-                        Math.abs(lum - (
-                            d[r]+d[r+1]+d[r+2]
-                        )*.333)
-                        +
-                        Math.abs(lum - (
-                            d[u]+d[u+1]+d[u+2]
-                        )*.333)
-                        +
-                        Math.abs(lum - (
-                            d[b]+d[b+1]+d[b+2]
-                        )*.333);
-
-                        const detail =
-                        edge * .015 * settings.detail;
-
-                        d[i] += detail;
-                        d[i+1] += detail;
-                        d[i+2] += detail;
-
-                        /* DENOISE LOW FREQUENCY */
-
-                        if(edge < 12){
-
-                            d[i] =
-                            d[i] * (1-settings.denoise)
-                            +
-                            (
-                                d[l]+d[r]+d[u]+d[b]
-                            )*.25*settings.denoise;
-
-                            d[i+1] =
-                            d[i+1] * (1-settings.denoise)
-                            +
-                            (
-                                d[l+1]+d[r+1]+d[u+1]+d[b+1]
-                            )*.25*settings.denoise;
-
-                            d[i+2] =
-                            d[i+2] * (1-settings.denoise)
-                            +
-                            (
-                                d[l+2]+d[r+2]+d[u+2]+d[b+2]
-                            )*.25*settings.denoise;
-
-                        }
-
-                    }
-
-                }
-
-                tctx.putImageData(
-                    img,
-                    0,
-                    0
-                );
-
-                /* ==========================================
-                   UPSCALE
-                ========================================== */
-
-                ctx.drawImage(
-
-                    tile,
-
-                    0,
-                    0,
-                    sw,
-                    sh,
-
-                    sx * scale,
-                    sy * scale,
-
-                    sw * scale,
-                    sh * scale
-                );
-
-                done++;
-
-                self.postMessage({
-
-                    type:'progress',
-
-                    progress:
-                    5 + (
-                        done / total
-                    ) * 80,
-
-                    status:
-                    'Reconstruindo detalhes'
-
-                });
-
-                await new Promise(r=>
-                    setTimeout(r,0)
-                );
-
-            }
-
-        }
-
-        self.postMessage({
-            type:'progress',
-            progress:92,
-            status:'Aplicando anti-artifacts'
-        });
-
-        const result =
-        canvas.transferToImageBitmap();
-
-        bitmap.close?.();
-
-        self.postMessage({
-
-            type:'done',
-
-            bitmap:result
-
-        },[result]);
-
-    }catch(err){
-
-        self.postMessage({
-
-            type:'error',
-
-            error:err.message
-
-        });
-
-    }
-
+const loading = document.getElementById("loading");
+const progressBar = document.getElementById("progressBar");
+
+let imageTexture = null;
+let image = null;
+
+const state = {
+
+    upscale:2,
+    sharpen:0.45,
+    detail:0.55,
+    texture:0.4,
+    denoise:0.25,
+    deblur:0.5,
+    vibrance:0.3,
+    split:0.5
 };
 
-`;
+const controls = [
+
+    ["Upscale", "upscale", 1, 4, 0.1],
+    ["Detail Recovery", "detail", 0, 1, 0.01],
+    ["Sharpen", "sharpen", 0, 1, 0.01],
+    ["Texture Enhancement", "texture", 0, 1, 0.01],
+    ["Denoise", "denoise", 0, 1, 0.01],
+    ["Deblur", "deblur", 0, 1, 0.01],
+    ["Vibrance", "vibrance", 0, 1, 0.01]
+
+];
+
+/* ============================================
+   CREATE CONTROLS
+============================================ */
+
+const controlsContainer = document.getElementById("controls");
+
+controls.forEach(c=>{
+
+    const div = document.createElement("div");
+    div.className = "control";
+
+    div.innerHTML = `
+        <div class="control-top">
+            <span>${c[0]}</span>
+            <span class="control-value" id="${c[1]}Value">${state[c[1]]}</span>
+        </div>
+
+        <input 
+            class="slider"
+            type="range"
+            min="${c[2]}"
+            max="${c[3]}"
+            step="${c[4]}"
+            value="${state[c[1]]}"
+            id="${c[1]}"
+        >
+    `;
+
+    controlsContainer.appendChild(div);
+
+    const slider = document.getElementById(c[1]);
+
+    slider.addEventListener("input", e=>{
+
+        state[c[1]] = parseFloat(e.target.value);
+
+        document.getElementById(c[1]+"Value").innerText = state[c[1]];
+
+    });
+
+});
+
+/* ============================================
+   SHADERS
+============================================ */
+
+const vertexShaderSource = `
+
+attribute vec2 position;
+varying vec2 vUv;
+
+void main(){
+
+    vUv = position * 0.5 + 0.5;
+
+    gl_Position = vec4(position,0.0,1.0);
+
 }
+`;
+
+const fragmentShaderSource = `
+
+precision highp float;
+
+varying vec2 vUv;
+
+uniform sampler2D uTexture;
+uniform vec2 resolution;
+
+uniform float sharpen;
+uniform float detail;
+uniform float textureEnhance;
+uniform float denoise;
+uniform float deblur;
+uniform float vibrance;
+uniform float splitPos;
+
+vec3 smartSharpen(vec2 uv){
+
+    vec2 px = 1.0 / resolution;
+
+    vec3 center = texture2D(uTexture,uv).rgb;
+
+    vec3 blur =
+        texture2D(uTexture,uv + vec2(px.x,0.)).rgb +
+        texture2D(uTexture,uv - vec2(px.x,0.)).rgb +
+        texture2D(uTexture,uv + vec2(0.,px.y)).rgb +
+        texture2D(uTexture,uv - vec2(0.,px.y)).rgb;
+
+    blur *= 0.25;
+
+    vec3 high = center - blur;
+
+    center += high * sharpen * 2.2;
+
+    return center;
+}
+
+vec3 detailEnhance(vec2 uv, vec3 color){
+
+    vec2 px = 1.0 / resolution;
+
+    vec3 sample1 = texture2D(uTexture, uv + px * 2.0).rgb;
+    vec3 sample2 = texture2D(uTexture, uv - px * 2.0).rgb;
+
+    vec3 freq = abs(sample1 - sample2);
+
+    color += freq * detail * 1.5;
+
+    return color;
+}
+
+vec3 smartDenoise(vec2 uv, vec3 color){
+
+    vec2 px = 1.0 / resolution;
+
+    vec3 avg = (
+        texture2D(uTexture,uv+px).rgb +
+        texture2D(uTexture,uv-px).rgb +
+        texture2D(uTexture,uv+vec2(px.x,-px.y)).rgb +
+        texture2D(uTexture,uv+vec2(-px.x,px.y)).rgb
+    ) * 0.25;
+
+    return mix(color,avg,denoise * 0.6);
+}
+
+vec3 vibrancePass(vec3 color){
+
+    float mx = max(max(color.r,color.g),color.b);
+    float mn = min(min(color.r,color.g),color.b);
+
+    float sat = mx - mn;
+
+    color.rgb = mix(vec3(dot(color.rgb,vec3(.299,.587,.114))),color.rgb,1.0 + vibrance * (1.0 - sat));
+
+    return color;
+}
+
+void main(){
+
+    vec3 original = texture2D(uTexture,vUv).rgb;
+
+    vec3 enhanced = smartSharpen(vUv);
+
+    enhanced = detailEnhance(vUv, enhanced);
+
+    enhanced = smartDenoise(vUv, enhanced);
+
+    enhanced = mix(enhanced, enhanced * 1.08, textureEnhance);
+
+    enhanced = vibrancePass(enhanced);
+
+    enhanced = clamp(enhanced,0.0,1.0);
+
+    if(vUv.x < splitPos){
+
+        gl_FragColor = vec4(original,1.0);
+
+    }else{
+
+        gl_FragColor = vec4(enhanced,1.0);
+
+    }
+
+}
+`;
+
+/* ============================================
+   WEBGL
+============================================ */
+
+function createShader(type, source){
+
+    const shader = gl.createShader(type);
+
+    gl.shaderSource(shader, source);
+
+    gl.compileShader(shader);
+
+    return shader;
+}
+
+const vertexShader = createShader(gl.VERTEX_SHADER, vertexShaderSource);
+
+const fragmentShader = createShader(gl.FRAGMENT_SHADER, fragmentShaderSource);
+
+const program = gl.createProgram();
+
+gl.attachShader(program, vertexShader);
+gl.attachShader(program, fragmentShader);
+
+gl.linkProgram(program);
+
+gl.useProgram(program);
+
+const vertices = new Float32Array([
+    -1,-1,
+    1,-1,
+    -1,1,
+    1,1
+]);
+
+const buffer = gl.createBuffer();
+
+gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+
+gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+const position = gl.getAttribLocation(program, "position");
+
+gl.enableVertexAttribArray(position);
+
+gl.vertexAttribPointer(position,2,gl.FLOAT,false,0,0);
+
+/* ============================================
+   IMAGE LOAD
+============================================ */
+
+function loadImage(file){
+
+    const reader = new FileReader();
+
+    reader.onload = e=>{
+
+        image = new Image();
+
+        image.onload = ()=>{
+
+            setupTexture();
+
+        };
+
+        image.src = e.target.result;
+    };
+
+    reader.readAsDataURL(file);
+}
+
+function setupTexture(){
+
+    canvas.width = image.width;
+    canvas.height = image.height;
+
+    gl.viewport(0,0,canvas.width,canvas.height);
+
+    imageTexture = gl.createTexture();
+
+    gl.bindTexture(gl.TEXTURE_2D, imageTexture);
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+    gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        image
+    );
+
+}
+
+/* ============================================
+   RENDER
+============================================ */
+
+let last = performance.now();
+let frames = 0;
+
+function render(){
+
+    requestAnimationFrame(render);
+
+    if(!imageTexture) return;
+
+    gl.uniform2f(
+        gl.getUniformLocation(program,"resolution"),
+        canvas.width,
+        canvas.height
+    );
+
+    gl.uniform1f(
+        gl.getUniformLocation(program,"sharpen"),
+        state.sharpen
+    );
+
+    gl.uniform1f(
+        gl.getUniformLocation(program,"detail"),
+        state.detail
+    );
+
+    gl.uniform1f(
+        gl.getUniformLocation(program,"textureEnhance"),
+        state.texture
+    );
+
+    gl.uniform1f(
+        gl.getUniformLocation(program,"denoise"),
+        state.denoise
+    );
+
+    gl.uniform1f(
+        gl.getUniformLocation(program,"deblur"),
+        state.deblur
+    );
+
+    gl.uniform1f(
+        gl.getUniformLocation(program,"vibrance"),
+        state.vibrance
+    );
+
+    gl.uniform1f(
+        gl.getUniformLocation(program,"splitPos"),
+        state.split
+    );
+
+    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+
+    frames++;
+
+    const now = performance.now();
+
+    if(now - last >= 1000){
+
+        document.getElementById("fps").innerText =
+            frames + " FPS";
+
+        frames = 0;
+        last = now;
+    }
+
+}
+
+render();
+
+/* ============================================
+   SPLIT VIEW
+============================================ */
+
+const preview = document.querySelector(".preview-wrapper");
+
+preview.addEventListener("pointermove", e=>{
+
+    if(e.pressure > 0){
+
+        const rect = preview.getBoundingClientRect();
+
+        state.split = (e.clientX - rect.left) / rect.width;
+
+        document.getElementById("splitLine").style.left =
+            state.split * 100 + "%";
+
+        document.getElementById("splitHandle").style.left =
+            state.split * 100 + "%";
+    }
+
+});
+
+/* ============================================
+   DRAG DROP
+============================================ */
+
+const dropZone = document.getElementById("dropZone");
+
+dropZone.addEventListener("dragover", e=>{
+
+    e.preventDefault();
+
+    dropZone.classList.add("active");
+
+});
+
+dropZone.addEventListener("dragleave", ()=>{
+
+    dropZone.classList.remove("active");
+
+});
+
+dropZone.addEventListener("drop", e=>{
+
+    e.preventDefault();
+
+    dropZone.classList.remove("active");
+
+    const file = e.dataTransfer.files[0];
+
+    if(file) loadImage(file);
+
+});
+
+document.getElementById("upload")
+.addEventListener("change", e=>{
+
+    if(e.target.files[0]){
+
+        loadImage(e.target.files[0]);
+
+    }
+
+});
+
+/* ============================================
+   AI ENHANCE
+============================================ */
+
+document.getElementById("enhanceBtn")
+.addEventListener("click", ()=>{
+
+    loading.classList.add("active");
+
+    let p = 0;
+
+    const interval = setInterval(()=>{
+
+        p += 6;
+
+        progressBar.style.width = p + "%";
+
+        if(p >= 100){
+
+            clearInterval(interval);
+
+            loading.classList.remove("active");
+
+            progressBar.style.width = "0%";
+
+        }
+
+    },50);
+
+});
+
+/* ============================================
+   EXPORT
+============================================ */
+
+document.getElementById("saveBtn")
+.addEventListener("click", ()=>{
+
+    const link = document.createElement("a");
+
+    link.download =
+        "neuroenhance_" + Date.now() + ".png";
+
+    link.href = canvas.toDataURL("image/png",1);
+
+    link.click();
+
+});
+
+/* ============================================
+   PRESETS
+============================================ */
+
+document.querySelectorAll(".badge")
+.forEach(badge=>{
+
+    badge.addEventListener("click", ()=>{
+
+        document.querySelectorAll(".badge")
+        .forEach(x=>x.classList.remove("active"));
+
+        badge.classList.add("active");
+
+        const p = badge.dataset.preset;
+
+        if(p==="anime"){
+
+            state.sharpen = 0.7;
+            state.detail = 0.8;
+            state.texture = 0.5;
+            state.vibrance = 0.7;
+
+        }
+
+        if(p==="real"){
+
+            state.sharpen = 0.45;
+            state.detail = 0.55;
+            state.texture = 0.4;
+            state.vibrance = 0.3;
+
+        }
+
+        if(p==="retro"){
+
+            state.denoise = 0.6;
+            state.texture = 0.3;
+            state.deblur = 0.8;
+
+        }
+
+        if(p==="rescue"){
+
+            state.denoise = 0.8;
+            state.sharpen = 0.7;
+            state.detail = 0.9;
+            state.deblur = 0.9;
+
+        }
+
+        controls.forEach(c=>{
+
+            document.getElementById(c[1]).value =
+                state[c[1]];
+
+            document.getElementById(c[1]+"Value")
+            .innerText = state[c[1]];
+
+        });
+
+    });
+
+});
 
 </script>
 
