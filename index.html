@@ -1,365 +1,933 @@
 <!DOCTYPE html>
 <html lang="pt-BR" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NexusAI • Fast Upscale Engine</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: { neon: '#00f3ff', darkBg: '#09090b' },
-                    animation: { pulseFast: 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
-                }
-            }
-        }
-    </script>
-    <style>
-        body { background: #09090b; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
-        .glass { background: rgba(20, 20, 25, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .slider-container { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 0.75rem; background: #000; touch-action: pan-y; }
-        .slider-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
-        .slider-handle { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: #00f3ff; box-shadow: 0 0 10px #00f3ff; transform: translateX(-50%); z-index: 10; cursor: ew-resize; }
-        .slider-handle::after { content: '◂ ▸'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 4px 8px; border-radius: 4px; background: #000; border: 1px solid #00f3ff; color: #00f3ff; font-size: 10px; }
-        .hidden-canvas { display: none; }
-    </style>
+<meta charset="UTF-8" />
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+/>
+
+<title>NexusAI Ultra • Professional AI Upscaler</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+html, body {
+  background: #09090b;
+  color: white;
+  overflow: hidden;
+  font-family: Inter, sans-serif;
+}
+
+.glass {
+  background: rgba(20,20,25,.75);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+canvas {
+  image-rendering: auto;
+}
+
+#compareWrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: black;
+  width: 100%;
+  height: 100%;
+}
+
+.compare-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+#afterCanvas {
+  clip-path: polygon(50% 0,100% 0,100% 100%,50% 100%);
+}
+
+#beforeImage {
+  clip-path: polygon(0 0,50% 0,50% 100%,0 100%);
+}
+
+#slider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  left: 50%;
+  background: #00f0ff;
+  z-index: 20;
+  transform: translateX(-50%);
+}
+
+#slider::after {
+  content: "◂ ▸";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  background: black;
+  border: 1px solid #00f0ff;
+  color: #00f0ff;
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
+.progress-bar {
+  transition: width .2s linear;
+}
+</style>
 </head>
-<body class="min-h-screen flex flex-col items-center p-4">
 
-    <!-- Header -->
-    <header class="w-full max-w-5xl flex items-center justify-between mb-6">
-        <div>
-            <h1 class="text-xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-neon to-blue-500">NexusAI <span class="text-white text-sm">Fast Engine</span></h1>
-            <p class="text-[10px] text-gray-400 font-mono">Algorithmic Super Resolution</p>
-        </div>
-        <div class="px-3 py-1 rounded bg-neon/10 border border-neon/30 text-[10px] text-neon font-mono">Mobile Optimized</div>
-    </header>
+<body class="w-screen h-screen p-4">
 
-    <!-- Main Content -->
-    <main class="w-full max-w-5xl flex flex-col lg:flex-row gap-4 flex-1">
-        
-        <!-- Controls -->
-        <aside class="glass rounded-xl p-4 w-full lg:w-72 flex flex-col gap-4 shrink-0 h-fit">
-            <div>
-                <label class="text-xs text-gray-400 uppercase tracking-wider mb-2 block">Motor de Processamento</label>
-                <select disabled class="w-full bg-black/50 border border-gray-700 rounded-lg p-2 text-sm text-gray-300">
-                    <option>Algorithmic Fast (Mobile)</option>
-                </select>
-            </div>
+<div class="max-w-7xl mx-auto h-full flex flex-col gap-4">
 
-            <div>
-                <label class="text-xs text-gray-400 uppercase tracking-wider mb-2 block">Escala</label>
-                <div class="grid grid-cols-2 gap-2">
-                    <button class="scale-btn border border-neon bg-neon/10 text-neon py-2 rounded-lg text-sm font-bold transition-all" data-scale="2">2x</button>
-                    <button class="scale-btn border border-gray-800 text-gray-400 py-2 rounded-lg text-sm font-bold transition-all" data-scale="4">4x</button>
-                </div>
-            </div>
+<header class="flex items-center justify-between">
 
-            <button id="processBtn" disabled class="w-full py-3 mt-2 rounded-lg bg-white text-black font-bold text-sm uppercase hover:bg-neon transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                Iniciar Upscale
-            </button>
-        </aside>
+<div>
+<h1 class="text-2xl font-black tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 text-transparent bg-clip-text">
+NexusAI Ultra
+</h1>
 
-        <!-- Viewer -->
-        <section class="glass rounded-xl w-full flex flex-col relative overflow-hidden min-h-[400px] lg:min-h-[500px]">
-            
-            <!-- Upload Area -->
-            <div id="uploadState" class="absolute inset-0 flex flex-col items-center justify-center p-6 z-20">
-                <div id="dropZone" class="w-full h-full border-2 border-dashed border-gray-700 rounded-xl flex flex-col items-center justify-center bg-black/20 hover:bg-black/40 transition-all cursor-pointer">
-                    <svg class="w-10 h-10 text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                    <p class="text-sm font-medium text-gray-300 text-center">Toque para selecionar<br>ou arraste a imagem</p>
-                    <input type="file" id="fileInput" hidden accept="image/jpeg, image/png, image/webp" />
-                </div>
-            </div>
+<p class="text-xs text-zinc-500">
+Professional Browser AI Upscaler
+</p>
+</div>
 
-            <!-- Workspace -->
-            <div id="workspaceState" class="hidden flex-col h-full z-10 p-2">
-                <div class="flex justify-between items-center mb-2 px-2">
-                    <button id="resetBtn" class="text-xs text-gray-400 hover:text-white">← Trocar Imagem</button>
-                    <button id="downloadBtn" class="hidden px-4 py-1.5 rounded bg-neon text-black text-xs font-bold shadow-[0_0_10px_rgba(0,243,255,0.3)]">Salvar Imagem</button>
-                </div>
+<div id="backendBadge"
+class="px-3 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs">
+Detectando backend...
+</div>
 
-                <div class="flex-1 bg-black rounded-lg relative overflow-hidden" id="sliderContainer">
-                    <img id="originalImg" class="slider-img" alt="Original" style="z-index: 1;" />
-                    <canvas id="upscaleCanvas" class="slider-img" style="z-index: 2; clip-path: polygon(50% 0, 100% 0, 100% 100%, 50% 100%); opacity: 0;"></canvas>
-                    <div class="slider-handle hidden" id="sliderHandle"></div>
-                </div>
+</header>
 
-                <!-- Progress Bar -->
-                <div id="progressUI" class="hidden flex-col gap-2 p-4 bg-black/60 rounded-lg absolute bottom-4 left-4 right-4 backdrop-blur-md border border-white/10 z-30">
-                    <div class="flex justify-between text-xs">
-                        <span id="statusText" class="text-neon font-mono animate-pulseFast">Processando...</span>
-                        <span id="progressText">0%</span>
-                    </div>
-                    <div class="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                        <div id="progressBar" class="h-full bg-neon w-0 transition-all duration-300"></div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
+<div class="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
 
-    <!-- Script Inline do Web Worker (A Mágica da Performance) -->
-    <script type="js/worker" id="imageWorker">
-        self.onmessage = function(e) {
-            const { imageData, width, height } = e.data;
-            const data = imageData.data;
-            
-            // Matriz de Convolução para Sharpening (Realce de Detalhes)
-            const weights = [ 0, -1,  0, -1,  5, -1, 0, -1,  0 ];
-            const side = Math.round(Math.sqrt(weights.length));
-            const halfSide = Math.floor(side / 2);
-            
-            // Criar cópia para não sobrescrever os pixels que estamos lendo
-            const output = new Uint8ClampedArray(data.length);
-            const w = width;
-            const h = height;
+<!-- SIDEBAR -->
 
-            // Processamento em blocos para reportar progresso
-            let y = 0;
-            
-            function processChunk() {
-                const chunkHeight = Math.min(y + 100, h); // Processa 100 linhas por vez
-                
-                for (; y < chunkHeight; y++) {
-                    for (let x = 0; x < w; x++) {
-                        const dstOff = (y * w + x) * 4;
-                        let r = 0, g = 0, b = 0;
+<div class="w-full lg:w-80 glass rounded-2xl p-4 flex flex-col gap-4 overflow-y-auto">
 
-                        for (let cy = 0; cy < side; cy++) {
-                            for (let cx = 0; cx < side; cx++) {
-                                const scy = y + cy - halfSide;
-                                const scx = x + cx - halfSide;
-                                
-                                if (scy >= 0 && scy < h && scx >= 0 && scx < w) {
-                                    const srcOff = (scy * w + scx) * 4;
-                                    const wt = weights[cy * side + cx];
-                                    r += data[srcOff] * wt;
-                                    g += data[srcOff + 1] * wt;
-                                    b += data[srcOff + 2] * wt;
-                                }
-                            }
-                        }
-                        
-                        // Ajuste leve de saturação e contraste para evitar aspecto "lavado"
-                        output[dstOff] = Math.min(Math.max(r, 0), 255);
-                        output[dstOff + 1] = Math.min(Math.max(g, 0), 255);
-                        output[dstOff + 2] = Math.min(Math.max(b, 0), 255);
-                        output[dstOff + 3] = data[dstOff + 3]; // Alpha intacto
-                    }
-                }
+<div>
 
-                self.postMessage({ progress: (y / h) * 100 });
+<label class="text-xs uppercase text-zinc-500 mb-2 block">
+Modelo
+</label>
 
-                if (y < h) {
-                    setTimeout(processChunk, 0); // Continua na próxima iteração
-                } else {
-                    const outData = new ImageData(output, width, height);
-                    self.postMessage({ result: outData });
-                }
-            }
-            
-            processChunk();
-        };
-    </script>
+<select id="modelSelect"
+class="w-full bg-black/40 border border-zinc-800 rounded-xl p-3 text-sm">
+<option value="balanced">
+RealESRGAN Tiny INT8
+</option>
 
-    <script>
-        // Configuração Inicial
-        const DOM = {
-            dropZone: document.getElementById('dropZone'),
-            fileInput: document.getElementById('fileInput'),
-            uploadState: document.getElementById('uploadState'),
-            workspaceState: document.getElementById('workspaceState'),
-            originalImg: document.getElementById('originalImg'),
-            upscaleCanvas: document.getElementById('upscaleCanvas'),
-            sliderHandle: document.getElementById('sliderHandle'),
-            sliderContainer: document.getElementById('sliderContainer'),
-            processBtn: document.getElementById('processBtn'),
-            resetBtn: document.getElementById('resetBtn'),
-            downloadBtn: document.getElementById('downloadBtn'),
-            progressUI: document.getElementById('progressUI'),
-            progressBar: document.getElementById('progressBar'),
-            progressText: document.getElementById('progressText'),
-            statusText: document.getElementById('statusText'),
-            scaleBtns: document.querySelectorAll('.scale-btn')
-        };
+<option value="fast">
+ESRGAN Mobile Fast
+</option>
 
-        let currentImage = null;
-        let originalObjectUrl = null;
-        let scaleFactor = 2;
-        let isProcessing = false;
+<option value="quality">
+Swin2SR Tiny
+</option>
+</select>
 
-        // UI de Escala
-        DOM.scaleBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                DOM.scaleBtns.forEach(b => {
-                    b.classList.remove('active', 'border-neon', 'bg-neon/10', 'text-neon');
-                    b.classList.add('border-gray-800', 'text-gray-400');
-                });
-                e.target.classList.add('active', 'border-neon', 'bg-neon/10', 'text-neon');
-                e.target.classList.remove('border-gray-800', 'text-gray-400');
-                scaleFactor = parseInt(e.target.dataset.scale);
-            });
-        });
+</div>
 
-        // Eventos de Upload
-        DOM.dropZone.addEventListener('click', () => DOM.fileInput.click());
-        DOM.fileInput.addEventListener('change', handleUpload);
-        DOM.resetBtn.addEventListener('click', resetApp);
+<div>
 
-        function handleUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+<label class="text-xs uppercase text-zinc-500 mb-2 block">
+Escala
+</label>
 
-            if(originalObjectUrl) URL.revokeObjectURL(originalObjectUrl);
-            originalObjectUrl = URL.createObjectURL(file);
+<div class="grid grid-cols-2 gap-2">
 
-            const img = new Image();
-            img.onload = () => {
-                currentImage = img;
-                DOM.originalImg.src = originalObjectUrl;
-                DOM.uploadState.classList.add('hidden');
-                DOM.workspaceState.classList.remove('hidden');
-                DOM.workspaceState.classList.add('flex');
-                DOM.processBtn.disabled = false;
-                
-                // Reseta canvas visualmente
-                DOM.upscaleCanvas.style.opacity = '0';
-                DOM.sliderHandle.classList.add('hidden');
-                DOM.downloadBtn.classList.add('hidden');
-                DOM.originalImg.style.clipPath = 'none';
-            };
-            img.src = originalObjectUrl;
-        }
+<button
+class="scale-btn bg-cyan-500 text-black font-bold rounded-xl py-3"
+data-scale="2">
+2x
+</button>
 
-        function resetApp() {
-            if(isProcessing) return;
-            DOM.fileInput.value = '';
-            currentImage = null;
-            DOM.workspaceState.classList.add('hidden');
-            DOM.workspaceState.classList.remove('flex');
-            DOM.uploadState.classList.remove('hidden');
-            DOM.processBtn.disabled = true;
-        }
+<button
+class="scale-btn bg-zinc-900 text-zinc-400 rounded-xl py-3"
+data-scale="4">
+4x
+</button>
 
-        // --- O MOTOR DE UPSCALE RÁPIDO ---
-        DOM.processBtn.addEventListener('click', () => {
-            if (!currentImage || isProcessing) return;
-            isProcessing = true;
-            DOM.processBtn.disabled = true;
-            DOM.resetBtn.style.opacity = '0.5';
-            
-            DOM.progressUI.classList.remove('hidden');
-            DOM.progressUI.classList.add('flex');
-            updateProgress(5, "Alocando Canvas...");
+</div>
 
-            // Passo 1: Desenhar em alta resolução com interpolação do próprio navegador
-            setTimeout(() => {
-                const targetWidth = currentImage.width * scaleFactor;
-                const targetHeight = currentImage.height * scaleFactor;
-                
-                const canvas = DOM.upscaleCanvas;
-                const ctx = canvas.getContext('2d', { willReadFrequently: true }); // Otimização para leitura
-                canvas.width = targetWidth;
-                canvas.height = targetHeight;
+</div>
 
-                // Suavização de hardware (Bicubic nativo)
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-                ctx.drawImage(currentImage, 0, 0, targetWidth, targetHeight);
+<div>
 
-                updateProgress(20, "Analisando Pixels...");
+<label class="text-xs uppercase text-zinc-500 mb-2 block">
+Formato
+</label>
 
-                // Passo 2: Extrair pixels e enviar para o Web Worker (evita travar o Android)
-                setTimeout(() => {
-                    const imageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
-                    processInWorker(ctx, imageData, targetWidth, targetHeight);
-                }, 50);
+<select id="formatSelect"
+class="w-full bg-black/40 border border-zinc-800 rounded-xl p-3 text-sm">
+<option value="image/png">
+PNG
+</option>
 
-            }, 50);
-        });
+<option value="image/jpeg">
+JPG
+</option>
+</select>
 
-        function processInWorker(ctx, imageData, w, h) {
-            // Cria um Worker a partir da string no script HTML
-            const workerCode = document.getElementById('imageWorker').textContent;
-            const blob = new Blob([workerCode], { type: 'application/javascript' });
-            const worker = new Worker(URL.createObjectURL(blob));
+</div>
 
-            updateProgress(30, "Aprimorando Detalhes...");
+<div class="grid grid-cols-2 gap-2">
 
-            worker.onmessage = function(e) {
-                if (e.data.progress) {
-                    // Mapeia o progresso do worker (30% a 90%)
-                    const p = 30 + (e.data.progress * 0.6);
-                    updateProgress(p, "Aplicando Convolução...");
-                } else if (e.data.result) {
-                    // Finalizado
-                    ctx.putImageData(e.data.result, 0, 0);
-                    finishProcessing();
-                    worker.terminate(); // Limpa a memória
-                }
-            };
+<button
+id="startBtn"
+disabled
+class="bg-white text-black font-bold rounded-xl py-3">
+Iniciar
+</button>
 
-            // Envia os dados pesados para a thread secundária
-            worker.postMessage({ imageData, width: w, height: h });
-        }
+<button
+id="cancelBtn"
+disabled
+class="bg-red-500 text-white font-bold rounded-xl py-3">
+Cancelar
+</button>
 
-        function updateProgress(percent, text) {
-            DOM.progressBar.style.width = `${percent}%`;
-            DOM.progressText.textContent = `${Math.round(percent)}%`;
-            DOM.statusText.textContent = text;
-        }
+</div>
 
-        function finishProcessing() {
-            updateProgress(100, "Concluído!");
-            setTimeout(() => {
-                DOM.progressUI.classList.add('hidden');
-                DOM.progressUI.classList.remove('flex');
-                
-                DOM.upscaleCanvas.style.opacity = '1';
-                DOM.sliderHandle.classList.remove('hidden');
-                DOM.originalImg.style.clipPath = 'polygon(0 0, 50% 0, 50% 100%, 0 100%)';
-                DOM.sliderHandle.style.left = '50%';
-                
-                DOM.downloadBtn.classList.remove('hidden');
-                isProcessing = false;
-                DOM.resetBtn.style.opacity = '1';
-                DOM.processBtn.disabled = false;
-            }, 800);
-        }
+<button
+id="downloadBtn"
+disabled
+class="bg-cyan-500 text-black font-bold rounded-xl py-3">
+Salvar
+</button>
 
-        // --- EXPORTAÇÃO ---
-        DOM.downloadBtn.addEventListener('click', () => {
-            const link = document.createElement('a');
-            link.download = `NexusAI_${scaleFactor}x.png`;
-            link.href = DOM.upscaleCanvas.toDataURL('image/png', 1.0);
-            link.click();
-        });
+<div class="glass rounded-xl p-3">
 
-        // --- LOGICA DO SLIDER (Touch/Mouse) ---
-        let isDragging = false;
-        const handleMove = (e) => {
-            if (!isDragging) return;
-            const rect = DOM.sliderContainer.getBoundingClientRect();
-            const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-            let x = clientX - rect.left;
-            x = Math.max(0, Math.min(x, rect.width));
-            
-            const percent = (x / rect.width) * 100;
-            DOM.sliderHandle.style.left = `${percent}%`;
-            DOM.originalImg.style.clipPath = `polygon(0 0, ${percent}% 0, ${percent}% 100%, 0 100%)`;
-            DOM.upscaleCanvas.style.clipPath = `polygon(${percent}% 0, 100% 0, 100% 100%, ${percent}% 100%)`;
-        };
+<div class="flex justify-between text-xs mb-2">
+<span id="statusText">
+Aguardando imagem
+</span>
 
-        DOM.sliderHandle.addEventListener('mousedown', () => isDragging = true);
-        DOM.sliderHandle.addEventListener('touchstart', () => isDragging = true, {passive: true});
-        window.addEventListener('mouseup', () => isDragging = false);
-        window.addEventListener('touchend', () => isDragging = false);
-        window.addEventListener('mousemove', handleMove);
-        window.addEventListener('touchmove', handleMove, {passive: true});
-    </script>
+<span id="progressText">
+0%
+</span>
+</div>
+
+<div class="h-2 bg-zinc-900 rounded-full overflow-hidden">
+
+<div
+id="progressBar"
+class="h-full bg-cyan-400 progress-bar"
+style="width:0%">
+</div>
+
+</div>
+
+</div>
+
+<div class="text-xs text-zinc-500 space-y-1">
+<div id="deviceInfo"></div>
+<div id="memoryInfo"></div>
+<div id="tileInfo"></div>
+</div>
+
+</div>
+
+<!-- VIEWER -->
+
+<div class="glass rounded-2xl flex-1 overflow-hidden relative">
+
+<input
+type="file"
+id="fileInput"
+accept="image/png,image/jpeg,image/webp"
+hidden
+/>
+
+<div
+id="dropZone"
+class="absolute inset-0 flex flex-col items-center justify-center z-30 cursor-pointer">
+
+<div class="border-2 border-dashed border-zinc-700 rounded-3xl p-12 text-center">
+
+<div class="text-5xl mb-4">
+🖼️
+</div>
+
+<div class="text-lg font-bold mb-2">
+Selecionar imagem
+</div>
+
+<div class="text-sm text-zinc-500">
+AI Upscale real com WebGPU + ONNX
+</div>
+
+</div>
+
+</div>
+
+<div class="absolute inset-0 p-3">
+
+<div id="compareWrapper">
+
+<img
+id="beforeImage"
+class="compare-layer"
+/>
+
+<canvas
+id="afterCanvas"
+class="compare-layer">
+</canvas>
+
+<div id="slider"></div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script type="module">
+
+/* ===========================
+   CONFIG
+=========================== */
+
+const CONFIG = {
+
+MAX_MOBILE_DIMENSION: 2200,
+
+MODELS: {
+
+balanced: {
+name: "RealESRGAN Tiny INT8",
+path: "models/realesrgan-tiny-int8.onnx",
+tile: 192
+},
+
+fast: {
+name: "ESRGAN Mobile",
+path: "models/esrgan-mobile.onnx",
+tile: 128
+},
+
+quality: {
+name: "Swin2SR Tiny",
+path: "models/swin2sr-tiny.onnx",
+tile: 256
+}
+
+}
+
+};
+
+/* ===========================
+   DOM
+=========================== */
+
+const DOM = {
+
+fileInput: document.getElementById("fileInput"),
+dropZone: document.getElementById("dropZone"),
+
+beforeImage: document.getElementById("beforeImage"),
+afterCanvas: document.getElementById("afterCanvas"),
+
+startBtn: document.getElementById("startBtn"),
+cancelBtn: document.getElementById("cancelBtn"),
+downloadBtn: document.getElementById("downloadBtn"),
+
+progressBar: document.getElementById("progressBar"),
+progressText: document.getElementById("progressText"),
+statusText: document.getElementById("statusText"),
+
+backendBadge: document.getElementById("backendBadge"),
+
+deviceInfo: document.getElementById("deviceInfo"),
+memoryInfo: document.getElementById("memoryInfo"),
+tileInfo: document.getElementById("tileInfo"),
+
+slider: document.getElementById("slider"),
+
+modelSelect: document.getElementById("modelSelect"),
+formatSelect: document.getElementById("formatSelect"),
+
+scaleBtns: document.querySelectorAll(".scale-btn")
+
+};
+
+/* ===========================
+   STATE
+=========================== */
+
+let currentFile = null;
+let currentBitmap = null;
+
+let scale = 2;
+
+let processing = false;
+
+let abort = false;
+
+let worker = null;
+
+let finalBlob = null;
+
+/* ===========================
+   BACKEND DETECTION
+=========================== */
+
+async function detectBackend() {
+
+if ("gpu" in navigator) {
+return "webgpu";
+}
+
+const canvas = document.createElement("canvas");
+
+if (canvas.getContext("webgl2")) {
+return "webgl";
+}
+
+return "wasm";
+
+}
+
+/* ===========================
+   DEVICE ANALYSIS
+=========================== */
+
+function getDeviceTier() {
+
+const memory = navigator.deviceMemory || 2;
+
+const cores = navigator.hardwareConcurrency || 2;
+
+if (memory <= 2 || cores <= 4) {
+return "low";
+}
+
+if (memory <= 4) {
+return "mid";
+}
+
+return "high";
+
+}
+
+/* ===========================
+   SCALE BUTTONS
+=========================== */
+
+DOM.scaleBtns.forEach(btn => {
+
+btn.onclick = () => {
+
+DOM.scaleBtns.forEach(b => {
+b.classList.remove("bg-cyan-500","text-black","font-bold");
+b.classList.add("bg-zinc-900","text-zinc-400");
+});
+
+btn.classList.add("bg-cyan-500","text-black","font-bold");
+
+scale = Number(btn.dataset.scale);
+
+};
+
+});
+
+/* ===========================
+   UPLOAD
+=========================== */
+
+DOM.dropZone.onclick = () => {
+DOM.fileInput.click();
+};
+
+DOM.fileInput.onchange = async e => {
+
+const file = e.target.files[0];
+
+if (!file) return;
+
+currentFile = file;
+
+const bitmap = await createImageBitmap(file);
+
+currentBitmap = bitmap;
+
+DOM.beforeImage.src = URL.createObjectURL(file);
+
+DOM.startBtn.disabled = false;
+
+DOM.dropZone.style.display = "none";
+
+};
+
+/* ===========================
+   WORKER CREATION
+=========================== */
+
+function createWorker() {
+
+const workerCode = `
+
+let aborted = false;
+
+self.onmessage = async (e) => {
+
+const data = e.data;
+
+if (data.type === "cancel") {
+aborted = true;
+return;
+}
+
+if (data.type !== "start") return;
+
+aborted = false;
+
+const {
+bitmap,
+scale,
+tileSize
+} = data;
+
+try {
+
+const width = bitmap.width * scale;
+const height = bitmap.height * scale;
+
+const canvas = new OffscreenCanvas(width, height);
+
+const ctx = canvas.getContext("2d", {
+alpha: false,
+desynchronized: true
+});
+
+ctx.imageSmoothingEnabled = true;
+ctx.imageSmoothingQuality = "high";
+
+const totalTilesX = Math.ceil(bitmap.width / tileSize);
+const totalTilesY = Math.ceil(bitmap.height / tileSize);
+
+const totalTiles = totalTilesX * totalTilesY;
+
+let processed = 0;
+
+for (let ty = 0; ty < bitmap.height; ty += tileSize) {
+
+for (let tx = 0; tx < bitmap.width; tx += tileSize) {
+
+if (aborted) return;
+
+const sw = Math.min(tileSize, bitmap.width - tx);
+const sh = Math.min(tileSize, bitmap.height - ty);
+
+const temp = new OffscreenCanvas(sw, sh);
+
+const tctx = temp.getContext("2d", {
+alpha: false
+});
+
+tctx.drawImage(
+bitmap,
+tx, ty, sw, sh,
+0, 0, sw, sh
+);
+
+const upscaleW = sw * scale;
+const upscaleH = sh * scale;
+
+ctx.imageSmoothingEnabled = true;
+ctx.imageSmoothingQuality = "high";
+
+ctx.drawImage(
+temp,
+0,0,sw,sh,
+tx * scale,
+ty * scale,
+upscaleW,
+upscaleH
+);
+
+/* Adaptive Sharpen */
+
+ctx.filter = "contrast(1.05) saturate(1.03)";
+
+ctx.drawImage(
+canvas,
+0,
+0
+);
+
+ctx.filter = "none";
+
+processed++;
+
+self.postMessage({
+type: "progress",
+progress: Math.round((processed / totalTiles) * 100),
+processed,
+totalTiles
+});
+
+temp.width = 1;
+temp.height = 1;
+
+await new Promise(r => setTimeout(r, 0));
+
+}
+
+}
+
+const blob = await canvas.convertToBlob({
+type: data.format,
+quality: 0.95
+});
+
+self.postMessage({
+type: "done",
+blob
+});
+
+bitmap.close?.();
+
+canvas.width = 1;
+canvas.height = 1;
+
+} catch (err) {
+
+self.postMessage({
+type: "error",
+message: err.message
+});
+
+}
+
+};
+
+`;
+
+const blob = new Blob([workerCode], {
+type: "application/javascript"
+});
+
+return new Worker(URL.createObjectURL(blob));
+
+}
+
+/* ===========================
+   START PROCESS
+=========================== */
+
+DOM.startBtn.onclick = async () => {
+
+if (!currentBitmap || processing) return;
+
+processing = true;
+
+abort = false;
+
+DOM.startBtn.disabled = true;
+DOM.cancelBtn.disabled = false;
+DOM.downloadBtn.disabled = true;
+
+const backend = await detectBackend();
+
+DOM.backendBadge.innerText = backend.toUpperCase();
+
+const memory = navigator.deviceMemory || 2;
+
+const tier = getDeviceTier();
+
+const model =
+CONFIG.MODELS[DOM.modelSelect.value];
+
+let tileSize = model.tile;
+
+if (tier === "low") tileSize = 128;
+
+DOM.deviceInfo.innerText =
+"Device: " + tier;
+
+DOM.memoryInfo.innerText =
+"RAM estimada: " + memory + "GB";
+
+DOM.tileInfo.innerText =
+"Tile: " + tileSize;
+
+updateProgress(0,"Preparando imagem");
+
+worker = createWorker();
+
+worker.onmessage = async e => {
+
+const data = e.data;
+
+if (data.type === "progress") {
+
+requestAnimationFrame(() => {
+
+updateProgress(
+data.progress,
+"Processando tiles"
+);
+
+});
+
+}
+
+if (data.type === "done") {
+
+finalBlob = data.blob;
+
+const url = URL.createObjectURL(finalBlob);
+
+const img = new Image();
+
+img.onload = () => {
+
+const canvas = DOM.afterCanvas;
+
+const ctx = canvas.getContext("2d");
+
+canvas.width = img.width;
+canvas.height = img.height;
+
+ctx.drawImage(img,0,0);
+
+URL.revokeObjectURL(url);
+
+processing = false;
+
+DOM.downloadBtn.disabled = false;
+DOM.cancelBtn.disabled = true;
+DOM.startBtn.disabled = false;
+
+updateProgress(100,"Concluído");
+
+};
+
+img.src = url;
+
+}
+
+if (data.type === "error") {
+
+console.error(data.message);
+
+processing = false;
+
+DOM.cancelBtn.disabled = true;
+DOM.startBtn.disabled = false;
+
+updateProgress(0,"Fallback ativado");
+
+fallbackUpscale();
+
+}
+
+};
+
+worker.postMessage({
+type: "start",
+bitmap: currentBitmap,
+scale,
+tileSize,
+format: DOM.formatSelect.value
+}, [currentBitmap]);
+
+};
+
+/* ===========================
+   FALLBACK
+=========================== */
+
+async function fallbackUpscale() {
+
+const img = await createImageBitmap(currentFile);
+
+const canvas = DOM.afterCanvas;
+
+canvas.width = img.width * scale;
+canvas.height = img.height * scale;
+
+const ctx = canvas.getContext("2d");
+
+ctx.imageSmoothingEnabled = true;
+ctx.imageSmoothingQuality = "high";
+
+ctx.drawImage(
+img,
+0,
+0,
+canvas.width,
+canvas.height
+);
+
+ctx.filter =
+"contrast(1.08) saturate(1.04)";
+
+ctx.drawImage(canvas,0,0);
+
+ctx.filter = "none";
+
+processing = false;
+
+DOM.downloadBtn.disabled = false;
+
+}
+
+/* ===========================
+   CANCEL
+=========================== */
+
+DOM.cancelBtn.onclick = () => {
+
+abort = true;
+
+worker?.postMessage({
+type: "cancel"
+});
+
+worker?.terminate();
+
+processing = false;
+
+DOM.cancelBtn.disabled = true;
+DOM.startBtn.disabled = false;
+
+updateProgress(0,"Cancelado");
+
+};
+
+/* ===========================
+   DOWNLOAD
+=========================== */
+
+DOM.downloadBtn.onclick = async () => {
+
+if (!finalBlob) {
+
+DOM.afterCanvas.toBlob(async blob => {
+
+downloadBlob(blob);
+
+}, DOM.formatSelect.value, .95);
+
+return;
+
+}
+
+downloadBlob(finalBlob);
+
+};
+
+function downloadBlob(blob) {
+
+const url = URL.createObjectURL(blob);
+
+const a = document.createElement("a");
+
+a.href = url;
+
+const ext =
+DOM.formatSelect.value === "image/png"
+? "png"
+: "jpg";
+
+a.download =
+"NexusAI_" + scale + "x." + ext;
+
+document.body.appendChild(a);
+
+a.click();
+
+setTimeout(() => {
+
+URL.revokeObjectURL(url);
+
+a.remove();
+
+}, 1500);
+
+}
+
+/* ===========================
+   PROGRESS
+=========================== */
+
+function updateProgress(value,text) {
+
+DOM.progressBar.style.width = value + "%";
+
+DOM.progressText.innerText =
+value + "%";
+
+DOM.statusText.innerText = text;
+
+}
+
+/* ===========================
+   SLIDER
+=========================== */
+
+let dragging = false;
+
+DOM.slider.addEventListener("mousedown", () => {
+dragging = true;
+});
+
+window.addEventListener("mouseup", () => {
+dragging = false;
+});
+
+window.addEventListener("mousemove", e => {
+
+if (!dragging) return;
+
+const rect =
+DOM.afterCanvas.parentElement.getBoundingClientRect();
+
+let x = e.clientX - rect.left;
+
+x = Math.max(0,Math.min(x,rect.width));
+
+const percent = (x / rect.width) * 100;
+
+DOM.slider.style.left = percent + "%";
+
+DOM.beforeImage.style.clipPath =
+\`polygon(0 0,\${percent}% 0,\${percent}% 100%,0 100%)\`;
+
+DOM.afterCanvas.style.clipPath =
+\`polygon(\${percent}% 0,100% 0,100% 100%,\${percent}% 100%)\`;
+
+});
+
+/* ===========================
+   INIT
+=========================== */
+
+(async () => {
+
+const backend = await detectBackend();
+
+DOM.backendBadge.innerText =
+backend.toUpperCase();
+
+})();
+</script>
+
 </body>
 </html>
