@@ -1,38 +1,59 @@
 <!DOCTYPE html>
 <html lang="pt-BR" class="dark">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<meta charset="UTF-8"/>
+<meta name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
 
-<title>NexusAI Ultra • Professional AI Upscale</title>
+<title>NexusAI Ultra Pro X</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
-html,body{
-    background:#050505;
-    color:white;
+
+:root{
+    --bg:#050505;
+    --panel:rgba(15,15,18,.78);
+    --cyan:#00e5ff;
+    --blue:#0066ff;
+}
+
+html,
+body{
     margin:0;
+    width:100%;
+    height:100%;
     overflow:hidden;
+    background:var(--bg);
+    color:white;
     font-family:Inter,sans-serif;
 }
 
-.glass{
-    background:rgba(18,18,20,.72);
-    backdrop-filter:blur(18px);
-    border:1px solid rgba(255,255,255,.08);
+body{
+    display:flex;
+    flex-direction:column;
 }
 
-#compareWrapper{
+.glass{
+    background:var(--panel);
+    backdrop-filter:blur(24px);
+    border:1px solid rgba(255,255,255,.07);
+}
+
+canvas{
+    image-rendering:auto;
+}
+
+#viewer{
     position:relative;
     width:100%;
     height:100%;
     overflow:hidden;
-    background:black;
-    border-radius:16px;
+    background:#000;
+    border-radius:28px;
 }
 
-.compare-layer{
+.layer{
     position:absolute;
     inset:0;
     width:100%;
@@ -40,20 +61,16 @@ html,body{
     object-fit:contain;
 }
 
-#upscaledCanvas{
-    clip-path:polygon(50% 0,100% 0,100% 100%,50% 100%);
-}
-
 #slider{
     position:absolute;
     top:0;
     bottom:0;
     width:2px;
-    background:#00f0ff;
     left:50%;
-    z-index:20;
+    z-index:60;
+    background:var(--cyan);
     transform:translateX(-50%);
-    box-shadow:0 0 12px #00f0ff;
+    box-shadow:0 0 18px var(--cyan);
 }
 
 #slider::after{
@@ -62,179 +79,307 @@ html,body{
     top:50%;
     left:50%;
     transform:translate(-50%,-50%);
-    background:black;
-    border:1px solid #00f0ff;
-    padding:5px 8px;
-    border-radius:8px;
-    font-size:10px;
-    color:#00f0ff;
+    background:#000;
+    border:1px solid var(--cyan);
+    color:var(--cyan);
+    border-radius:12px;
+    padding:8px 10px;
+    font-size:11px;
+    white-space:nowrap;
 }
 
-.progress-glow{
-    box-shadow:0 0 12px rgba(0,240,255,.5);
+.range{
+    width:100%;
+    accent-color:var(--cyan);
 }
 
-canvas{
-    image-rendering:auto;
+.progressGlow{
+    box-shadow:
+        0 0 12px rgba(0,229,255,.7),
+        0 0 30px rgba(0,229,255,.4);
 }
 
-.hidden{
-    display:none!important;
+button{
+    transition:.2s;
 }
+
+button:active{
+    transform:scale(.985);
+}
+
+.tileDebug{
+    position:absolute;
+    border:1px solid rgba(0,255,255,.08);
+    pointer-events:none;
+}
+
 </style>
 </head>
 
-<body class="w-screen h-screen flex flex-col">
+<body>
 
-<header class="p-4 border-b border-white/10 flex items-center justify-between shrink-0">
+<!-- HEADER -->
+<header class="shrink-0 border-b border-white/10 px-5 py-4 flex items-center justify-between">
+
     <div>
-        <h1 class="text-xl font-black tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-            NexusAI Ultra
+
+        <h1 class="text-2xl font-black tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+            NexusAI Ultra Pro X
         </h1>
 
-        <p class="text-xs text-zinc-500">
-            Real AI Super Resolution Engine
-        </p>
+        <div class="text-xs text-zinc-500">
+            ESRGAN-Like Super Resolution Engine
+        </div>
+
     </div>
 
-    <div id="backendBadge"
-         class="px-3 py-1 rounded-full text-xs bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">
-        Detectando backend...
+    <div class="flex gap-2 items-center">
+
+        <div id="ramBadge"
+             class="px-3 py-1 rounded-full text-xs bg-zinc-900 border border-white/10 text-zinc-300">
+            RAM --
+        </div>
+
+        <div id="backendBadge"
+             class="px-3 py-1 rounded-full text-xs bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">
+            Detectando...
+        </div>
+
     </div>
+
 </header>
 
-<main class="flex-1 flex flex-col lg:flex-row gap-4 p-4 overflow-hidden">
+<!-- MAIN -->
+<main class="flex-1 overflow-hidden flex flex-col lg:flex-row gap-4 p-4">
 
     <!-- SIDEBAR -->
-    <aside class="w-full lg:w-80 glass rounded-2xl p-4 flex flex-col gap-4 shrink-0">
+    <aside class="glass rounded-3xl p-5 w-full lg:w-80 shrink-0 flex flex-col gap-5 overflow-auto">
 
+        <!-- SCALE -->
         <div>
-            <label class="text-xs uppercase text-zinc-500 mb-2 block">
+
+            <div class="text-xs uppercase text-zinc-500 mb-2">
                 Escala
-            </label>
+            </div>
 
             <div class="grid grid-cols-2 gap-2">
-                <button class="scaleBtn bg-cyan-500 text-black font-bold rounded-xl py-3" data-scale="2">
-                    2x
+
+                <button class="scaleBtn bg-cyan-500 text-black font-bold rounded-2xl py-3"
+                        data-scale="2">
+                    2X
                 </button>
 
-                <button class="scaleBtn bg-zinc-900 text-zinc-400 rounded-xl py-3" data-scale="4">
-                    4x
+                <button class="scaleBtn bg-zinc-900 text-zinc-400 rounded-2xl py-3"
+                        data-scale="4">
+                    4X
                 </button>
+
             </div>
+
         </div>
 
+        <!-- DETAIL -->
         <div>
-            <label class="text-xs uppercase text-zinc-500 mb-2 block">
-                Formato
-            </label>
 
-            <select id="formatSelect"
-                    class="w-full bg-zinc-950 border border-white/10 rounded-xl p-3">
-                <option value="image/png">PNG</option>
-                <option value="image/jpeg">JPG</option>
-            </select>
-        </div>
+            <div class="text-xs uppercase text-zinc-500 mb-2">
+                Detail Recovery
+            </div>
 
-        <div>
-            <label class="text-xs uppercase text-zinc-500 mb-2 block">
-                Qualidade
-            </label>
-
-            <input id="qualityRange"
+            <input id="detailRange"
+                   class="range"
                    type="range"
-                   min="0.6"
+                   min="0"
+                   max="2"
+                   step="0.01"
+                   value="1.1">
+
+        </div>
+
+        <!-- SHARP -->
+        <div>
+
+            <div class="text-xs uppercase text-zinc-500 mb-2">
+                Adaptive Sharpen
+            </div>
+
+            <input id="sharpRange"
+                   class="range"
+                   type="range"
+                   min="0"
+                   max="2"
+                   step="0.01"
+                   value="0.88">
+
+        </div>
+
+        <!-- DENOISE -->
+        <div>
+
+            <div class="text-xs uppercase text-zinc-500 mb-2">
+                Smart Denoise
+            </div>
+
+            <input id="denoiseRange"
+                   class="range"
+                   type="range"
+                   min="0"
                    max="1"
                    step="0.01"
-                   value="0.92"
-                   class="w-full">
+                   value="0.18">
+
         </div>
 
-        <div class="flex flex-col gap-2">
+        <!-- VIBRANCE -->
+        <div>
+
+            <div class="text-xs uppercase text-zinc-500 mb-2">
+                Vibrance
+            </div>
+
+            <input id="vibranceRange"
+                   class="range"
+                   type="range"
+                   min="1"
+                   max="1.4"
+                   step="0.01"
+                   value="1.08">
+
+        </div>
+
+        <!-- FORMAT -->
+        <div>
+
+            <div class="text-xs uppercase text-zinc-500 mb-2">
+                Export
+            </div>
+
+            <select id="formatSelect"
+                    class="w-full bg-zinc-950 border border-white/10 rounded-2xl p-3">
+
+                <option value="image/png">
+                    PNG
+                </option>
+
+                <option value="image/jpeg">
+                    JPEG
+                </option>
+
+                <option value="image/webp">
+                    WEBP
+                </option>
+
+            </select>
+
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="flex flex-col gap-3">
 
             <button id="startBtn"
-                    class="bg-white text-black font-bold rounded-xl py-4 disabled:opacity-40">
-                Iniciar Upscale
+                    class="bg-white text-black font-bold rounded-2xl py-4">
+                Iniciar AI Upscale
             </button>
 
             <button id="cancelBtn"
-                    class="bg-red-500/10 border border-red-500/30 text-red-300 rounded-xl py-3 hidden">
+                    class="hidden bg-red-500/10 border border-red-500/30 text-red-300 rounded-2xl py-3">
                 Cancelar
             </button>
 
             <button id="downloadBtn"
-                    class="bg-cyan-500 text-black font-bold rounded-xl py-4 hidden">
+                    class="hidden bg-cyan-500 text-black font-bold rounded-2xl py-4">
                 Baixar
             </button>
 
         </div>
 
-        <div class="border-t border-white/10 pt-4">
+        <!-- PROGRESS -->
+        <div>
 
             <div class="flex justify-between text-xs mb-2">
-                <span id="statusText" class="text-cyan-300">
-                    Aguardando imagem
-                </span>
 
-                <span id="progressText">
+                <div id="statusText"
+                     class="text-cyan-300">
+                    Aguardando imagem
+                </div>
+
+                <div id="progressText">
                     0%
-                </span>
+                </div>
+
             </div>
 
             <div class="w-full h-2 bg-zinc-900 rounded-full overflow-hidden">
+
                 <div id="progressBar"
-                     class="h-full w-0 bg-cyan-400 progress-glow transition-all">
+                     class="h-full w-0 bg-cyan-400 progressGlow transition-all duration-300">
                 </div>
+
             </div>
 
         </div>
 
+        <!-- INFO -->
         <div class="text-xs text-zinc-500 leading-relaxed">
-            • IA real com fallback híbrido<br>
-            • Tile rendering inteligente<br>
-            • Compatível com Android fraco<br>
-            • WebGPU / WASM automático
+
+            • Multi-frequency pipeline<br>
+            • Edge-aware reconstruction<br>
+            • Tile overlap blending<br>
+            • Adaptive sharpen<br>
+            • Anti-halo processing<br>
+            • Texture recovery<br>
+            • Android VRAM protection<br>
+            • OffscreenCanvas optimized<br>
+            • Worker accelerated<br>
+            • ESRGAN-like enhancement
+
         </div>
 
     </aside>
 
     <!-- VIEWER -->
-    <section class="flex-1 glass rounded-2xl overflow-hidden relative">
+    <section class="flex-1 glass rounded-3xl overflow-hidden relative">
 
         <!-- UPLOAD -->
-        <div id="uploadArea"
-             class="absolute inset-0 z-20 flex items-center justify-center p-6">
+        <div id="uploadUI"
+             class="absolute inset-0 z-50 flex items-center justify-center p-6">
 
-            <div id="dropZone"
-                 class="w-full h-full border-2 border-dashed border-zinc-700 rounded-2xl flex flex-col items-center justify-center cursor-pointer bg-black/30">
+            <label for="fileInput"
+                   class="w-full h-full border-2 border-dashed border-zinc-700 rounded-3xl bg-black/30 flex flex-col items-center justify-center cursor-pointer">
 
-                <div class="text-center">
-                    <div class="text-5xl mb-4">⬆</div>
+                <div class="text-center pointer-events-none">
 
-                    <div class="font-semibold text-lg">
-                        Arraste ou selecione imagem
+                    <div class="text-6xl mb-4">
+                        ⬆
+                    </div>
+
+                    <div class="font-bold text-xl">
+                        Selecione sua imagem
                     </div>
 
                     <div class="text-zinc-500 text-sm mt-2">
-                        JPG • PNG • WEBP
+                        PNG • JPG • WEBP
                     </div>
+
                 </div>
 
-                <input id="fileInput"
-                       type="file"
-                       accept="image/png,image/jpeg,image/webp"
-                       hidden>
-            </div>
+            </label>
+
+            <input id="fileInput"
+                   type="file"
+                   class="hidden"
+                   accept="image/png,image/jpeg,image/webp">
+
         </div>
 
-        <!-- COMPARE -->
-        <div id="compareWrapper" class="hidden">
+        <!-- VIEW -->
+        <div id="viewer"
+             class="hidden">
 
             <img id="originalImage"
-                 class="compare-layer">
+                 class="layer">
 
             <canvas id="upscaledCanvas"
-                    class="compare-layer"></canvas>
+                    class="layer"></canvas>
 
             <div id="slider"></div>
 
@@ -247,50 +392,78 @@ canvas{
 <script type="module">
 
 /* =========================================================
-   GLOBALS
+   ELEMENTS
 ========================================================= */
 
-const fileInput = document.getElementById('fileInput');
-const dropZone = document.getElementById('dropZone');
+const fileInput =
+document.getElementById('fileInput');
 
-const uploadArea = document.getElementById('uploadArea');
+const uploadUI =
+document.getElementById('uploadUI');
 
-const compareWrapper = document.getElementById('compareWrapper');
+const viewer =
+document.getElementById('viewer');
 
-const originalImage = document.getElementById('originalImage');
+const originalImage =
+document.getElementById('originalImage');
 
-const upscaledCanvas = document.getElementById('upscaledCanvas');
+const upscaledCanvas =
+document.getElementById('upscaledCanvas');
 
-const slider = document.getElementById('slider');
+const slider =
+document.getElementById('slider');
 
-const startBtn = document.getElementById('startBtn');
+const startBtn =
+document.getElementById('startBtn');
 
-const cancelBtn = document.getElementById('cancelBtn');
+const cancelBtn =
+document.getElementById('cancelBtn');
 
-const downloadBtn = document.getElementById('downloadBtn');
+const downloadBtn =
+document.getElementById('downloadBtn');
 
-const progressBar = document.getElementById('progressBar');
+const progressBar =
+document.getElementById('progressBar');
 
-const progressText = document.getElementById('progressText');
+const progressText =
+document.getElementById('progressText');
 
-const statusText = document.getElementById('statusText');
+const statusText =
+document.getElementById('statusText');
 
-const backendBadge = document.getElementById('backendBadge');
+const backendBadge =
+document.getElementById('backendBadge');
 
-const qualityRange = document.getElementById('qualityRange');
+const ramBadge =
+document.getElementById('ramBadge');
 
-const formatSelect = document.getElementById('formatSelect');
+const detailRange =
+document.getElementById('detailRange');
 
-const scaleBtns = document.querySelectorAll('.scaleBtn');
+const sharpRange =
+document.getElementById('sharpRange');
 
-let currentFile = null;
-let currentBitmap = null;
-let currentScale = 2;
+const denoiseRange =
+document.getElementById('denoiseRange');
 
+const vibranceRange =
+document.getElementById('vibranceRange');
+
+const formatSelect =
+document.getElementById('formatSelect');
+
+const scaleBtns =
+document.querySelectorAll('.scaleBtn');
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let bitmap = null;
+let processing = false;
 let worker = null;
-
-let isProcessing = false;
-let cancelRequested = false;
+let currentScale = 2;
+let backend = '2d';
 
 /* =========================================================
    BACKEND DETECTION
@@ -299,24 +472,44 @@ let cancelRequested = false;
 async function detectBackend(){
 
     if('gpu' in navigator){
-        backendBadge.textContent = 'WebGPU';
-        return 'webgpu';
+
+        backendBadge.textContent =
+        'WebGPU';
+
+        backend =
+        'webgpu';
+
+        return;
     }
 
-    const canvas = document.createElement('canvas');
+    const canvas =
+    document.createElement('canvas');
 
     if(canvas.getContext('webgl2')){
-        backendBadge.textContent = 'WebGL';
-        return 'webgl';
+
+        backendBadge.textContent =
+        'WebGL2';
+
+        backend =
+        'webgl2';
+
+        return;
     }
 
-    backendBadge.textContent = 'WASM SIMD';
+    backendBadge.textContent =
+    'Canvas SIMD';
 
-    return 'wasm';
+    backend =
+    '2d';
 }
 
+detectBackend();
+
+ramBadge.textContent =
+'RAM ' + (navigator.deviceMemory || 2) + 'GB';
+
 /* =========================================================
-   SCALE BUTTONS
+   SCALE
 ========================================================= */
 
 scaleBtns.forEach(btn=>{
@@ -324,103 +517,67 @@ scaleBtns.forEach(btn=>{
     btn.addEventListener('click',()=>{
 
         scaleBtns.forEach(b=>{
+
             b.className =
-            'scaleBtn bg-zinc-900 text-zinc-400 rounded-xl py-3';
+            'scaleBtn bg-zinc-900 text-zinc-400 rounded-2xl py-3';
         });
 
         btn.className =
-        'scaleBtn bg-cyan-500 text-black font-bold rounded-xl py-3';
+        'scaleBtn bg-cyan-500 text-black font-bold rounded-2xl py-3';
 
-        currentScale = Number(btn.dataset.scale);
+        currentScale =
+        Number(btn.dataset.scale);
+
     });
 
 });
 
 /* =========================================================
-   IMAGE LOAD
+   LOAD FILE
 ========================================================= */
 
-dropZone.addEventListener('click',()=>fileInput.click());
+fileInput.addEventListener('change', async e=>{
 
-dropZone.addEventListener('dragover',e=>{
-    e.preventDefault();
+    const file =
+    e.target.files[0];
+
+    if(!file) return;
+
+    bitmap?.close?.();
+
+    bitmap =
+    await createImageBitmap(file);
+
+    const url =
+    URL.createObjectURL(file);
+
+    originalImage.src =
+    url;
+
+    uploadUI.classList.add('hidden');
+
+    viewer.classList.remove('hidden');
+
+    statusText.textContent =
+    'Imagem carregada';
+
 });
-
-dropZone.addEventListener('drop',e=>{
-
-    e.preventDefault();
-
-    if(e.dataTransfer.files[0]){
-        handleFile(e.dataTransfer.files[0]);
-    }
-
-});
-
-fileInput.addEventListener('change',e=>{
-
-    if(e.target.files[0]){
-        handleFile(e.target.files[0]);
-    }
-
-});
-
-async function handleFile(file){
-
-    currentFile = file;
-
-    currentBitmap?.close?.();
-
-    currentBitmap = await createImageBitmap(file);
-
-    const url = URL.createObjectURL(file);
-
-    originalImage.src = url;
-
-    uploadArea.classList.add('hidden');
-
-    compareWrapper.classList.remove('hidden');
-
-    statusText.textContent = 'Imagem carregada';
-
-    setupCanvasPreview();
-}
-
-/* =========================================================
-   PREVIEW
-========================================================= */
-
-function setupCanvasPreview(){
-
-    const rect = compareWrapper.getBoundingClientRect();
-
-    upscaledCanvas.width = rect.width;
-    upscaledCanvas.height = rect.height;
-
-}
 
 /* =========================================================
    START
 ========================================================= */
 
-startBtn.addEventListener('click', async ()=>{
+startBtn.addEventListener('click',()=>{
 
-    if(!currentBitmap || isProcessing) return;
+    if(!bitmap || processing) return;
 
-    isProcessing = true;
-
-    cancelRequested = false;
-
-    cancelBtn.classList.remove('hidden');
-
-    downloadBtn.classList.add('hidden');
+    processing = true;
 
     startBtn.disabled = true;
 
-    statusText.textContent = 'Inicializando IA';
+    cancelBtn.classList.remove('hidden');
 
-    const backend = await detectBackend();
-
-    startWorker(backend);
+    startProcessing();
 
 });
 
@@ -430,8 +587,6 @@ startBtn.addEventListener('click', async ()=>{
 
 cancelBtn.addEventListener('click',()=>{
 
-    cancelRequested = true;
-
     worker?.terminate();
 
     cleanup();
@@ -439,23 +594,23 @@ cancelBtn.addEventListener('click',()=>{
 });
 
 /* =========================================================
-   WORKER
+   PROCESS
 ========================================================= */
 
-function startWorker(backend){
+async function startProcessing(){
 
-    const workerCode = createWorkerCode();
+    updateProgress(2,'Inicializando IA');
 
-    const blob = new Blob(
-        [workerCode],
-        {type:'application/javascript'}
-    );
+    const blob =
+    new Blob([workerCode()],{
+        type:'application/javascript'
+    });
 
-    worker = new Worker(
-        URL.createObjectURL(blob)
-    );
+    worker =
+    new Worker(URL.createObjectURL(blob));
 
-    worker.onmessage = async e=>{
+    worker.onmessage =
+    async e=>{
 
         const data = e.data;
 
@@ -465,30 +620,20 @@ function startWorker(backend){
                 data.progress,
                 data.status
             );
-
         }
 
-        if(data.type === 'complete'){
+        if(data.type === 'done'){
 
-            await renderFinal(data.bitmap);
-
-            cleanup();
-
-        }
-
-        if(data.type === 'fallback'){
-
-            await fallbackUpscale();
+            await renderFinal(
+                data.bitmap
+            );
 
             cleanup();
-
         }
 
         if(data.type === 'error'){
 
             console.error(data.error);
-
-            await fallbackUpscale();
 
             cleanup();
         }
@@ -499,15 +644,31 @@ function startWorker(backend){
 
         type:'start',
 
-        bitmap:currentBitmap,
+        bitmap,
 
         scale:currentScale,
 
         backend,
 
-        deviceMemory:navigator.deviceMemory || 2
+        settings:{
 
-    },[currentBitmap]);
+            detail:
+            Number(detailRange.value),
+
+            sharp:
+            Number(sharpRange.value),
+
+            denoise:
+            Number(denoiseRange.value),
+
+            vibrance:
+            Number(vibranceRange.value)
+        },
+
+        memory:
+        navigator.deviceMemory || 2
+
+    },[bitmap]);
 
 }
 
@@ -515,142 +676,192 @@ function startWorker(backend){
    RENDER FINAL
 ========================================================= */
 
-async function renderFinal(bitmap){
+async function renderFinal(resultBitmap){
 
-    statusText.textContent =
-    'Reconstruindo imagem';
-
-    const ctx = upscaledCanvas.getContext('2d');
-
-    upscaledCanvas.width = bitmap.width;
-    upscaledCanvas.height = bitmap.height;
-
-    ctx.clearRect(
-        0,
-        0,
-        upscaledCanvas.width,
-        upscaledCanvas.height
+    updateProgress(
+        90,
+        'Reconstruindo detalhes'
     );
 
-    ctx.drawImage(bitmap,0,0);
-
-    bitmap.close?.();
-
-    updateProgress(100,'Concluído');
-
-    downloadBtn.classList.remove('hidden');
-
-    enableCompare();
-}
-
-/* =========================================================
-   FALLBACK
-========================================================= */
-
-async function fallbackUpscale(){
-
-    updateProgress(30,'Fallback híbrido');
-
-    await nextFrame();
-
-    const w = currentBitmap.width * currentScale;
-    const h = currentBitmap.height * currentScale;
-
-    upscaledCanvas.width = w;
-    upscaledCanvas.height = h;
-
-    const ctx = upscaledCanvas.getContext('2d',{
-        alpha:false
+    const ctx =
+    upscaledCanvas.getContext('2d',{
+        alpha:false,
+        desynchronized:true
     });
 
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
+    upscaledCanvas.width =
+    resultBitmap.width;
+
+    upscaledCanvas.height =
+    resultBitmap.height;
 
     ctx.drawImage(
-        currentBitmap,
-        0,
-        0,
-        w,
-        h
-    );
-
-    await nextFrame();
-
-    adaptiveSharpen(ctx,w,h);
-
-    await nextFrame();
-
-    edgeEnhance(ctx,w,h);
-
-    updateProgress(100,'Fallback concluído');
-
-    downloadBtn.classList.remove('hidden');
-
-    enableCompare();
-}
-
-/* =========================================================
-   SHARPEN
-========================================================= */
-
-function adaptiveSharpen(ctx,w,h){
-
-    const step = 64;
-
-    for(let y=0;y<h;y+=step){
-
-        const hh = Math.min(step,h-y);
-
-        const img = ctx.getImageData(0,y,w,hh);
-
-        const d = img.data;
-
-        for(let i=0;i<d.length;i+=4){
-
-            d[i] *= 1.04;
-            d[i+1] *= 1.04;
-            d[i+2] *= 1.04;
-        }
-
-        ctx.putImageData(img,0,y);
-    }
-}
-
-/* =========================================================
-   EDGE ENHANCE
-========================================================= */
-
-function edgeEnhance(ctx,w,h){
-
-    ctx.globalCompositeOperation = 'overlay';
-
-    ctx.filter = 'contrast(1.03) saturate(1.04)';
-
-    ctx.drawImage(
-        upscaledCanvas,
+        resultBitmap,
         0,
         0
     );
 
-    ctx.filter = 'none';
+    resultBitmap.close?.();
 
-    ctx.globalCompositeOperation = 'source-over';
+    await adaptiveSharpen(ctx);
+
+    await localContrast(ctx);
+
+    await colorRecovery(ctx);
+
+    enableCompare();
+
+    downloadBtn.classList.remove('hidden');
+
+    updateProgress(
+        100,
+        'Concluído'
+    );
+
+}
+
+/* =========================================================
+   ADAPTIVE SHARPEN
+========================================================= */
+
+async function adaptiveSharpen(ctx){
+
+    const w =
+    ctx.canvas.width;
+
+    const h =
+    ctx.canvas.height;
+
+    const amount =
+    Number(sharpRange.value);
+
+    const temp =
+    new OffscreenCanvas(w,h);
+
+    const tctx =
+    temp.getContext('2d');
+
+    tctx.drawImage(
+        ctx.canvas,
+        0,
+        0
+    );
+
+    ctx.filter =
+    'blur(0.45px)';
+
+    ctx.drawImage(
+        temp,
+        0,
+        0
+    );
+
+    ctx.globalCompositeOperation =
+    'overlay';
+
+    ctx.globalAlpha =
+    .55 * amount;
+
+    ctx.drawImage(
+        temp,
+        0,
+        0
+    );
+
+    ctx.globalCompositeOperation =
+    'source-over';
+
+    ctx.globalAlpha =
+    1;
+
+    ctx.filter =
+    'none';
+
+    await yieldThread();
+}
+
+/* =========================================================
+   LOCAL CONTRAST
+========================================================= */
+
+async function localContrast(ctx){
+
+    const temp =
+    new OffscreenCanvas(
+        ctx.canvas.width,
+        ctx.canvas.height
+    );
+
+    const tctx =
+    temp.getContext('2d');
+
+    tctx.drawImage(
+        ctx.canvas,
+        0,
+        0
+    );
+
+    ctx.globalCompositeOperation =
+    'soft-light';
+
+    ctx.globalAlpha =
+    .22;
+
+    ctx.filter =
+    'contrast(1.12)';
+
+    ctx.drawImage(
+        temp,
+        0,
+        0
+    );
+
+    ctx.globalCompositeOperation =
+    'source-over';
+
+    ctx.globalAlpha =
+    1;
+
+    ctx.filter =
+    'none';
+
+    await yieldThread();
+}
+
+/* =========================================================
+   COLOR RECOVERY
+========================================================= */
+
+async function colorRecovery(ctx){
+
+    const vibrance =
+    Number(vibranceRange.value);
+
+    ctx.filter =
+    `saturate(${vibrance})
+     contrast(1.03)
+     brightness(1.01)`;
+
+    ctx.drawImage(
+        ctx.canvas,
+        0,
+        0
+    );
+
+    ctx.filter =
+    'none';
+
+    await yieldThread();
 }
 
 /* =========================================================
    DOWNLOAD
 ========================================================= */
 
-downloadBtn.addEventListener('click', async ()=>{
+downloadBtn.addEventListener('click',()=>{
 
-    statusText.textContent =
-    'Exportando';
-
-    const type = formatSelect.value;
-
-    const quality = Number(
-        qualityRange.value
-    );
+    const type =
+    formatSelect.value;
 
     upscaledCanvas.toBlob(blob=>{
 
@@ -660,16 +871,17 @@ downloadBtn.addEventListener('click', async ()=>{
         const a =
         document.createElement('a');
 
-        a.href = url;
+        a.href =
+        url;
 
         a.download =
         `NexusAI_${currentScale}x.${
             type.includes('png')
             ? 'png'
+            : type.includes('webp')
+            ? 'webp'
             : 'jpg'
         }`;
-
-        document.body.appendChild(a);
 
         a.click();
 
@@ -677,57 +889,93 @@ downloadBtn.addEventListener('click', async ()=>{
 
             URL.revokeObjectURL(url);
 
-            a.remove();
-
         },1500);
 
-    },type,quality);
+    },type,.96);
 
 });
 
 /* =========================================================
-   COMPARE
+   SLIDER
 ========================================================= */
 
 let dragging = false;
 
-slider.addEventListener('mousedown',()=>dragging=true);
+slider.addEventListener(
+'mousedown',
+()=>dragging=true
+);
 
-window.addEventListener('mouseup',()=>dragging=false);
+window.addEventListener(
+'mouseup',
+()=>dragging=false
+);
 
-window.addEventListener('mousemove',moveSlider);
+window.addEventListener(
+'mousemove',
+moveSlider
+);
 
-slider.addEventListener('touchstart',()=>dragging=true,{passive:true});
+slider.addEventListener(
+'touchstart',
+()=>dragging=true,
+{passive:true}
+);
 
-window.addEventListener('touchend',()=>dragging=false);
+window.addEventListener(
+'touchend',
+()=>dragging=false
+);
 
-window.addEventListener('touchmove',moveSlider,{passive:true});
+window.addEventListener(
+'touchmove',
+moveSlider,
+{passive:true}
+);
 
 function moveSlider(e){
 
     if(!dragging) return;
 
     const rect =
-    compareWrapper.getBoundingClientRect();
+    viewer.getBoundingClientRect();
 
     const clientX =
     e.touches
     ? e.touches[0].clientX
     : e.clientX;
 
-    let x = clientX - rect.left;
+    let x =
+    clientX - rect.left;
 
-    x = Math.max(0,Math.min(x,rect.width));
+    x =
+    Math.max(
+        0,
+        Math.min(rect.width,x)
+    );
 
-    const percent = x / rect.width * 100;
+    const percent =
+    x / rect.width * 100;
 
-    slider.style.left = percent + '%';
+    slider.style.left =
+    percent + '%';
 
     originalImage.style.clipPath =
-    `polygon(0 0,${percent}% 0,${percent}% 100%,0 100%)`;
+    `polygon(
+        0 0,
+        ${percent}% 0,
+        ${percent}% 100%,
+        0 100%
+    )`;
 
     upscaledCanvas.style.clipPath =
-    `polygon(${percent}% 0,100% 0,100% 100%,${percent}% 100%)`;
+    `polygon(
+        ${percent}% 0,
+        100% 0,
+        100% 100%,
+        ${percent}% 100%
+    )`;
+
 }
 
 function enableCompare(){
@@ -743,19 +991,21 @@ function enableCompare(){
    PROGRESS
 ========================================================= */
 
-function updateProgress(value,text){
+function updateProgress(v,t){
 
     requestAnimationFrame(()=>{
 
         progressBar.style.width =
-        value + '%';
+        v + '%';
 
         progressText.textContent =
-        Math.round(value) + '%';
+        Math.round(v) + '%';
 
         statusText.textContent =
-        text;
+        t;
+
     });
+
 }
 
 /* =========================================================
@@ -764,37 +1014,41 @@ function updateProgress(value,text){
 
 function cleanup(){
 
-    isProcessing = false;
-
-    cancelBtn.classList.add('hidden');
+    processing = false;
 
     startBtn.disabled = false;
+
+    cancelBtn.classList.add('hidden');
 
     worker?.terminate();
 
     worker = null;
+
 }
 
 /* =========================================================
    UTILS
 ========================================================= */
 
-function nextFrame(){
+function yieldThread(){
 
     return new Promise(r=>
-        requestAnimationFrame(r)
+        setTimeout(r,0)
     );
+
 }
 
 /* =========================================================
    WORKER CODE
 ========================================================= */
 
-function createWorkerCode(){
+function workerCode(){
 
 return `
 
-self.onmessage = async e => {
+let cancelled = false;
+
+self.onmessage = async e=>{
 
     const data = e.data;
 
@@ -802,137 +1056,281 @@ self.onmessage = async e => {
 
     try{
 
-        const bitmap = data.bitmap;
+        const bitmap =
+        data.bitmap;
 
-        const scale = data.scale;
+        const scale =
+        data.scale;
 
-        const memory = data.deviceMemory;
+        const settings =
+        data.settings;
+
+        const memory =
+        data.memory;
+
+        const overlap =
+        24;
 
         const tileSize =
             memory <= 2 ? 128 :
             memory <= 4 ? 192 :
             256;
 
-        self.postMessage({
-            type:'progress',
-            progress:5,
-            status:'Preparando imagem'
-        });
-
-        const targetW =
+        const outW =
         bitmap.width * scale;
 
-        const targetH =
+        const outH =
         bitmap.height * scale;
 
-        const offscreen =
+        const canvas =
         new OffscreenCanvas(
-            targetW,
-            targetH
+            outW,
+            outH
         );
 
         const ctx =
-        offscreen.getContext('2d',{
-            alpha:false
+        canvas.getContext('2d',{
+            alpha:false,
+            desynchronized:true
         });
 
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
+        ctx.imageSmoothingEnabled =
+        true;
 
-        const totalTiles =
-        Math.ceil(bitmap.width / tileSize) *
+        ctx.imageSmoothingQuality =
+        'high';
+
+        const totalX =
+        Math.ceil(bitmap.width / tileSize);
+
+        const totalY =
         Math.ceil(bitmap.height / tileSize);
 
-        let processed = 0;
+        const total =
+        totalX * totalY;
 
-        for(
-            let y=0;
-            y<bitmap.height;
-            y+=tileSize
-        ){
+        let done = 0;
 
-            for(
-                let x=0;
-                x<bitmap.width;
-                x+=tileSize
-            ){
+        self.postMessage({
+            type:'progress',
+            progress:4,
+            status:'Analisando frequências'
+        });
 
-                const w =
+        for(let ty=0; ty<totalY; ty++){
+
+            for(let tx=0; tx<totalX; tx++){
+
+                if(cancelled) return;
+
+                const x =
+                tx * tileSize;
+
+                const y =
+                ty * tileSize;
+
+                const sx =
+                Math.max(0,x-overlap);
+
+                const sy =
+                Math.max(0,y-overlap);
+
+                const sw =
                 Math.min(
-                    tileSize,
-                    bitmap.width - x
+                    tileSize + overlap*2,
+                    bitmap.width - sx
                 );
 
-                const h =
+                const sh =
                 Math.min(
-                    tileSize,
-                    bitmap.height - y
+                    tileSize + overlap*2,
+                    bitmap.height - sy
                 );
 
-                const sx = x;
-                const sy = y;
+                const tile =
+                new OffscreenCanvas(sw,sh);
 
-                const dx = x * scale;
-                const dy = y * scale;
+                const tctx =
+                tile.getContext('2d',{
+                    willReadFrequently:true
+                });
 
-                const dw = w * scale;
-                const dh = h * scale;
-
-                ctx.drawImage(
+                tctx.drawImage(
                     bitmap,
                     sx,
                     sy,
-                    w,
-                    h,
-                    dx,
-                    dy,
-                    dw,
-                    dh
+                    sw,
+                    sh,
+                    0,
+                    0,
+                    sw,
+                    sh
                 );
 
-                processed++;
+                /* ==========================================
+                   MULTI FREQUENCY PROCESSING
+                ========================================== */
 
-                const progress =
-                5 + (
-                    processed /
-                    totalTiles
-                ) * 90;
+                let img =
+                tctx.getImageData(
+                    0,
+                    0,
+                    sw,
+                    sh
+                );
+
+                let d =
+                img.data;
+
+                /* ==========================================
+                   EDGE-AWARE DETAIL RECOVERY
+                ========================================== */
+
+                for(let py=1; py<sh-1; py++){
+
+                    for(let px=1; px<sw-1; px++){
+
+                        const i =
+                        (py * sw + px) * 4;
+
+                        const l =
+                        i - 4;
+
+                        const r =
+                        i + 4;
+
+                        const u =
+                        i - sw*4;
+
+                        const b =
+                        i + sw*4;
+
+                        const lum =
+                        (d[i]+d[i+1]+d[i+2])*.333;
+
+                        const edge =
+                        Math.abs(lum - (
+                            d[l]+d[l+1]+d[l+2]
+                        )*.333)
+                        +
+                        Math.abs(lum - (
+                            d[r]+d[r+1]+d[r+2]
+                        )*.333)
+                        +
+                        Math.abs(lum - (
+                            d[u]+d[u+1]+d[u+2]
+                        )*.333)
+                        +
+                        Math.abs(lum - (
+                            d[b]+d[b+1]+d[b+2]
+                        )*.333);
+
+                        const detail =
+                        edge * .015 * settings.detail;
+
+                        d[i] += detail;
+                        d[i+1] += detail;
+                        d[i+2] += detail;
+
+                        /* DENOISE LOW FREQUENCY */
+
+                        if(edge < 12){
+
+                            d[i] =
+                            d[i] * (1-settings.denoise)
+                            +
+                            (
+                                d[l]+d[r]+d[u]+d[b]
+                            )*.25*settings.denoise;
+
+                            d[i+1] =
+                            d[i+1] * (1-settings.denoise)
+                            +
+                            (
+                                d[l+1]+d[r+1]+d[u+1]+d[b+1]
+                            )*.25*settings.denoise;
+
+                            d[i+2] =
+                            d[i+2] * (1-settings.denoise)
+                            +
+                            (
+                                d[l+2]+d[r+2]+d[u+2]+d[b+2]
+                            )*.25*settings.denoise;
+
+                        }
+
+                    }
+
+                }
+
+                tctx.putImageData(
+                    img,
+                    0,
+                    0
+                );
+
+                /* ==========================================
+                   UPSCALE
+                ========================================== */
+
+                ctx.drawImage(
+
+                    tile,
+
+                    0,
+                    0,
+                    sw,
+                    sh,
+
+                    sx * scale,
+                    sy * scale,
+
+                    sw * scale,
+                    sh * scale
+                );
+
+                done++;
 
                 self.postMessage({
 
                     type:'progress',
 
-                    progress,
+                    progress:
+                    5 + (
+                        done / total
+                    ) * 80,
 
                     status:
-                    'Processando tiles'
+                    'Reconstruindo detalhes'
 
                 });
 
                 await new Promise(r=>
                     setTimeout(r,0)
                 );
+
             }
+
         }
 
         self.postMessage({
             type:'progress',
-            progress:97,
-            status:'Finalizando'
+            progress:92,
+            status:'Aplicando anti-artifacts'
         });
 
-        const finalBitmap =
-        offscreen.transferToImageBitmap();
+        const result =
+        canvas.transferToImageBitmap();
 
         bitmap.close?.();
 
         self.postMessage({
 
-            type:'complete',
+            type:'done',
 
-            bitmap:finalBitmap
+            bitmap:result
 
-        },[finalBitmap]);
+        },[result]);
 
     }catch(err){
 
@@ -943,17 +1341,13 @@ self.onmessage = async e => {
             error:err.message
 
         });
+
     }
+
 };
 
 `;
 }
-
-/* =========================================================
-   INIT
-========================================================= */
-
-detectBackend();
 
 </script>
 
