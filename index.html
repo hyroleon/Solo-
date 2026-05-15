@@ -2,931 +2,959 @@
 <html lang="pt-BR" class="dark">
 <head>
 <meta charset="UTF-8" />
-<meta
-  name="viewport"
-  content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
-/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
 
-<title>NexusAI Ultra • Professional AI Upscaler</title>
+<title>NexusAI Ultra • Professional AI Upscale</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
-html, body {
-  background: #09090b;
-  color: white;
-  overflow: hidden;
-  font-family: Inter, sans-serif;
+html,body{
+    background:#050505;
+    color:white;
+    margin:0;
+    overflow:hidden;
+    font-family:Inter,sans-serif;
 }
 
-.glass {
-  background: rgba(20,20,25,.75);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,.08);
+.glass{
+    background:rgba(18,18,20,.72);
+    backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,.08);
 }
 
-canvas {
-  image-rendering: auto;
+#compareWrapper{
+    position:relative;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:black;
+    border-radius:16px;
 }
 
-#compareWrapper {
-  position: relative;
-  overflow: hidden;
-  border-radius: 16px;
-  background: black;
-  width: 100%;
-  height: 100%;
+.compare-layer{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:contain;
 }
 
-.compare-layer {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+#upscaledCanvas{
+    clip-path:polygon(50% 0,100% 0,100% 100%,50% 100%);
 }
 
-#afterCanvas {
-  clip-path: polygon(50% 0,100% 0,100% 100%,50% 100%);
+#slider{
+    position:absolute;
+    top:0;
+    bottom:0;
+    width:2px;
+    background:#00f0ff;
+    left:50%;
+    z-index:20;
+    transform:translateX(-50%);
+    box-shadow:0 0 12px #00f0ff;
 }
 
-#beforeImage {
-  clip-path: polygon(0 0,50% 0,50% 100%,0 100%);
+#slider::after{
+    content:'◂ ▸';
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background:black;
+    border:1px solid #00f0ff;
+    padding:5px 8px;
+    border-radius:8px;
+    font-size:10px;
+    color:#00f0ff;
 }
 
-#slider {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  left: 50%;
-  background: #00f0ff;
-  z-index: 20;
-  transform: translateX(-50%);
+.progress-glow{
+    box-shadow:0 0 12px rgba(0,240,255,.5);
 }
 
-#slider::after {
-  content: "◂ ▸";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%,-50%);
-  background: black;
-  border: 1px solid #00f0ff;
-  color: #00f0ff;
-  font-size: 10px;
-  padding: 4px 8px;
-  border-radius: 999px;
+canvas{
+    image-rendering:auto;
 }
 
-.progress-bar {
-  transition: width .2s linear;
+.hidden{
+    display:none!important;
 }
 </style>
 </head>
 
-<body class="w-screen h-screen p-4">
+<body class="w-screen h-screen flex flex-col">
 
-<div class="max-w-7xl mx-auto h-full flex flex-col gap-4">
+<header class="p-4 border-b border-white/10 flex items-center justify-between shrink-0">
+    <div>
+        <h1 class="text-xl font-black tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+            NexusAI Ultra
+        </h1>
 
-<header class="flex items-center justify-between">
+        <p class="text-xs text-zinc-500">
+            Real AI Super Resolution Engine
+        </p>
+    </div>
 
-<div>
-<h1 class="text-2xl font-black tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 text-transparent bg-clip-text">
-NexusAI Ultra
-</h1>
-
-<p class="text-xs text-zinc-500">
-Professional Browser AI Upscaler
-</p>
-</div>
-
-<div id="backendBadge"
-class="px-3 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs">
-Detectando backend...
-</div>
-
+    <div id="backendBadge"
+         class="px-3 py-1 rounded-full text-xs bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">
+        Detectando backend...
+    </div>
 </header>
 
-<div class="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
+<main class="flex-1 flex flex-col lg:flex-row gap-4 p-4 overflow-hidden">
 
-<!-- SIDEBAR -->
+    <!-- SIDEBAR -->
+    <aside class="w-full lg:w-80 glass rounded-2xl p-4 flex flex-col gap-4 shrink-0">
 
-<div class="w-full lg:w-80 glass rounded-2xl p-4 flex flex-col gap-4 overflow-y-auto">
+        <div>
+            <label class="text-xs uppercase text-zinc-500 mb-2 block">
+                Escala
+            </label>
 
-<div>
+            <div class="grid grid-cols-2 gap-2">
+                <button class="scaleBtn bg-cyan-500 text-black font-bold rounded-xl py-3" data-scale="2">
+                    2x
+                </button>
 
-<label class="text-xs uppercase text-zinc-500 mb-2 block">
-Modelo
-</label>
+                <button class="scaleBtn bg-zinc-900 text-zinc-400 rounded-xl py-3" data-scale="4">
+                    4x
+                </button>
+            </div>
+        </div>
 
-<select id="modelSelect"
-class="w-full bg-black/40 border border-zinc-800 rounded-xl p-3 text-sm">
-<option value="balanced">
-RealESRGAN Tiny INT8
-</option>
+        <div>
+            <label class="text-xs uppercase text-zinc-500 mb-2 block">
+                Formato
+            </label>
 
-<option value="fast">
-ESRGAN Mobile Fast
-</option>
+            <select id="formatSelect"
+                    class="w-full bg-zinc-950 border border-white/10 rounded-xl p-3">
+                <option value="image/png">PNG</option>
+                <option value="image/jpeg">JPG</option>
+            </select>
+        </div>
 
-<option value="quality">
-Swin2SR Tiny
-</option>
-</select>
+        <div>
+            <label class="text-xs uppercase text-zinc-500 mb-2 block">
+                Qualidade
+            </label>
 
-</div>
+            <input id="qualityRange"
+                   type="range"
+                   min="0.6"
+                   max="1"
+                   step="0.01"
+                   value="0.92"
+                   class="w-full">
+        </div>
 
-<div>
+        <div class="flex flex-col gap-2">
 
-<label class="text-xs uppercase text-zinc-500 mb-2 block">
-Escala
-</label>
+            <button id="startBtn"
+                    class="bg-white text-black font-bold rounded-xl py-4 disabled:opacity-40">
+                Iniciar Upscale
+            </button>
 
-<div class="grid grid-cols-2 gap-2">
+            <button id="cancelBtn"
+                    class="bg-red-500/10 border border-red-500/30 text-red-300 rounded-xl py-3 hidden">
+                Cancelar
+            </button>
 
-<button
-class="scale-btn bg-cyan-500 text-black font-bold rounded-xl py-3"
-data-scale="2">
-2x
-</button>
+            <button id="downloadBtn"
+                    class="bg-cyan-500 text-black font-bold rounded-xl py-4 hidden">
+                Baixar
+            </button>
 
-<button
-class="scale-btn bg-zinc-900 text-zinc-400 rounded-xl py-3"
-data-scale="4">
-4x
-</button>
+        </div>
 
-</div>
+        <div class="border-t border-white/10 pt-4">
 
-</div>
+            <div class="flex justify-between text-xs mb-2">
+                <span id="statusText" class="text-cyan-300">
+                    Aguardando imagem
+                </span>
 
-<div>
+                <span id="progressText">
+                    0%
+                </span>
+            </div>
 
-<label class="text-xs uppercase text-zinc-500 mb-2 block">
-Formato
-</label>
+            <div class="w-full h-2 bg-zinc-900 rounded-full overflow-hidden">
+                <div id="progressBar"
+                     class="h-full w-0 bg-cyan-400 progress-glow transition-all">
+                </div>
+            </div>
 
-<select id="formatSelect"
-class="w-full bg-black/40 border border-zinc-800 rounded-xl p-3 text-sm">
-<option value="image/png">
-PNG
-</option>
+        </div>
 
-<option value="image/jpeg">
-JPG
-</option>
-</select>
+        <div class="text-xs text-zinc-500 leading-relaxed">
+            • IA real com fallback híbrido<br>
+            • Tile rendering inteligente<br>
+            • Compatível com Android fraco<br>
+            • WebGPU / WASM automático
+        </div>
 
-</div>
+    </aside>
 
-<div class="grid grid-cols-2 gap-2">
+    <!-- VIEWER -->
+    <section class="flex-1 glass rounded-2xl overflow-hidden relative">
 
-<button
-id="startBtn"
-disabled
-class="bg-white text-black font-bold rounded-xl py-3">
-Iniciar
-</button>
+        <!-- UPLOAD -->
+        <div id="uploadArea"
+             class="absolute inset-0 z-20 flex items-center justify-center p-6">
 
-<button
-id="cancelBtn"
-disabled
-class="bg-red-500 text-white font-bold rounded-xl py-3">
-Cancelar
-</button>
+            <div id="dropZone"
+                 class="w-full h-full border-2 border-dashed border-zinc-700 rounded-2xl flex flex-col items-center justify-center cursor-pointer bg-black/30">
 
-</div>
+                <div class="text-center">
+                    <div class="text-5xl mb-4">⬆</div>
 
-<button
-id="downloadBtn"
-disabled
-class="bg-cyan-500 text-black font-bold rounded-xl py-3">
-Salvar
-</button>
+                    <div class="font-semibold text-lg">
+                        Arraste ou selecione imagem
+                    </div>
 
-<div class="glass rounded-xl p-3">
+                    <div class="text-zinc-500 text-sm mt-2">
+                        JPG • PNG • WEBP
+                    </div>
+                </div>
 
-<div class="flex justify-between text-xs mb-2">
-<span id="statusText">
-Aguardando imagem
-</span>
+                <input id="fileInput"
+                       type="file"
+                       accept="image/png,image/jpeg,image/webp"
+                       hidden>
+            </div>
+        </div>
 
-<span id="progressText">
-0%
-</span>
-</div>
+        <!-- COMPARE -->
+        <div id="compareWrapper" class="hidden">
 
-<div class="h-2 bg-zinc-900 rounded-full overflow-hidden">
+            <img id="originalImage"
+                 class="compare-layer">
 
-<div
-id="progressBar"
-class="h-full bg-cyan-400 progress-bar"
-style="width:0%">
-</div>
+            <canvas id="upscaledCanvas"
+                    class="compare-layer"></canvas>
 
-</div>
+            <div id="slider"></div>
 
-</div>
+        </div>
 
-<div class="text-xs text-zinc-500 space-y-1">
-<div id="deviceInfo"></div>
-<div id="memoryInfo"></div>
-<div id="tileInfo"></div>
-</div>
+    </section>
 
-</div>
-
-<!-- VIEWER -->
-
-<div class="glass rounded-2xl flex-1 overflow-hidden relative">
-
-<input
-type="file"
-id="fileInput"
-accept="image/png,image/jpeg,image/webp"
-hidden
-/>
-
-<div
-id="dropZone"
-class="absolute inset-0 flex flex-col items-center justify-center z-30 cursor-pointer">
-
-<div class="border-2 border-dashed border-zinc-700 rounded-3xl p-12 text-center">
-
-<div class="text-5xl mb-4">
-🖼️
-</div>
-
-<div class="text-lg font-bold mb-2">
-Selecionar imagem
-</div>
-
-<div class="text-sm text-zinc-500">
-AI Upscale real com WebGPU + ONNX
-</div>
-
-</div>
-
-</div>
-
-<div class="absolute inset-0 p-3">
-
-<div id="compareWrapper">
-
-<img
-id="beforeImage"
-class="compare-layer"
-/>
-
-<canvas
-id="afterCanvas"
-class="compare-layer">
-</canvas>
-
-<div id="slider"></div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
+</main>
 
 <script type="module">
 
-/* ===========================
-   CONFIG
-=========================== */
+/* =========================================================
+   GLOBALS
+========================================================= */
 
-const CONFIG = {
+const fileInput = document.getElementById('fileInput');
+const dropZone = document.getElementById('dropZone');
 
-MAX_MOBILE_DIMENSION: 2200,
+const uploadArea = document.getElementById('uploadArea');
 
-MODELS: {
+const compareWrapper = document.getElementById('compareWrapper');
 
-balanced: {
-name: "RealESRGAN Tiny INT8",
-path: "models/realesrgan-tiny-int8.onnx",
-tile: 192
-},
+const originalImage = document.getElementById('originalImage');
 
-fast: {
-name: "ESRGAN Mobile",
-path: "models/esrgan-mobile.onnx",
-tile: 128
-},
+const upscaledCanvas = document.getElementById('upscaledCanvas');
 
-quality: {
-name: "Swin2SR Tiny",
-path: "models/swin2sr-tiny.onnx",
-tile: 256
-}
+const slider = document.getElementById('slider');
 
-}
+const startBtn = document.getElementById('startBtn');
 
-};
+const cancelBtn = document.getElementById('cancelBtn');
 
-/* ===========================
-   DOM
-=========================== */
+const downloadBtn = document.getElementById('downloadBtn');
 
-const DOM = {
+const progressBar = document.getElementById('progressBar');
 
-fileInput: document.getElementById("fileInput"),
-dropZone: document.getElementById("dropZone"),
+const progressText = document.getElementById('progressText');
 
-beforeImage: document.getElementById("beforeImage"),
-afterCanvas: document.getElementById("afterCanvas"),
+const statusText = document.getElementById('statusText');
 
-startBtn: document.getElementById("startBtn"),
-cancelBtn: document.getElementById("cancelBtn"),
-downloadBtn: document.getElementById("downloadBtn"),
+const backendBadge = document.getElementById('backendBadge');
 
-progressBar: document.getElementById("progressBar"),
-progressText: document.getElementById("progressText"),
-statusText: document.getElementById("statusText"),
+const qualityRange = document.getElementById('qualityRange');
 
-backendBadge: document.getElementById("backendBadge"),
+const formatSelect = document.getElementById('formatSelect');
 
-deviceInfo: document.getElementById("deviceInfo"),
-memoryInfo: document.getElementById("memoryInfo"),
-tileInfo: document.getElementById("tileInfo"),
-
-slider: document.getElementById("slider"),
-
-modelSelect: document.getElementById("modelSelect"),
-formatSelect: document.getElementById("formatSelect"),
-
-scaleBtns: document.querySelectorAll(".scale-btn")
-
-};
-
-/* ===========================
-   STATE
-=========================== */
+const scaleBtns = document.querySelectorAll('.scaleBtn');
 
 let currentFile = null;
 let currentBitmap = null;
-
-let scale = 2;
-
-let processing = false;
-
-let abort = false;
+let currentScale = 2;
 
 let worker = null;
 
-let finalBlob = null;
+let isProcessing = false;
+let cancelRequested = false;
 
-/* ===========================
+/* =========================================================
    BACKEND DETECTION
-=========================== */
+========================================================= */
 
-async function detectBackend() {
+async function detectBackend(){
 
-if ("gpu" in navigator) {
-return "webgpu";
+    if('gpu' in navigator){
+        backendBadge.textContent = 'WebGPU';
+        return 'webgpu';
+    }
+
+    const canvas = document.createElement('canvas');
+
+    if(canvas.getContext('webgl2')){
+        backendBadge.textContent = 'WebGL';
+        return 'webgl';
+    }
+
+    backendBadge.textContent = 'WASM SIMD';
+
+    return 'wasm';
 }
 
-const canvas = document.createElement("canvas");
-
-if (canvas.getContext("webgl2")) {
-return "webgl";
-}
-
-return "wasm";
-
-}
-
-/* ===========================
-   DEVICE ANALYSIS
-=========================== */
-
-function getDeviceTier() {
-
-const memory = navigator.deviceMemory || 2;
-
-const cores = navigator.hardwareConcurrency || 2;
-
-if (memory <= 2 || cores <= 4) {
-return "low";
-}
-
-if (memory <= 4) {
-return "mid";
-}
-
-return "high";
-
-}
-
-/* ===========================
+/* =========================================================
    SCALE BUTTONS
-=========================== */
+========================================================= */
 
-DOM.scaleBtns.forEach(btn => {
+scaleBtns.forEach(btn=>{
 
-btn.onclick = () => {
+    btn.addEventListener('click',()=>{
 
-DOM.scaleBtns.forEach(b => {
-b.classList.remove("bg-cyan-500","text-black","font-bold");
-b.classList.add("bg-zinc-900","text-zinc-400");
+        scaleBtns.forEach(b=>{
+            b.className =
+            'scaleBtn bg-zinc-900 text-zinc-400 rounded-xl py-3';
+        });
+
+        btn.className =
+        'scaleBtn bg-cyan-500 text-black font-bold rounded-xl py-3';
+
+        currentScale = Number(btn.dataset.scale);
+    });
+
 });
 
-btn.classList.add("bg-cyan-500","text-black","font-bold");
+/* =========================================================
+   IMAGE LOAD
+========================================================= */
 
-scale = Number(btn.dataset.scale);
+dropZone.addEventListener('click',()=>fileInput.click());
 
-};
+dropZone.addEventListener('dragover',e=>{
+    e.preventDefault();
+});
+
+dropZone.addEventListener('drop',e=>{
+
+    e.preventDefault();
+
+    if(e.dataTransfer.files[0]){
+        handleFile(e.dataTransfer.files[0]);
+    }
 
 });
 
-/* ===========================
-   UPLOAD
-=========================== */
+fileInput.addEventListener('change',e=>{
 
-DOM.dropZone.onclick = () => {
-DOM.fileInput.click();
-};
+    if(e.target.files[0]){
+        handleFile(e.target.files[0]);
+    }
 
-DOM.fileInput.onchange = async e => {
+});
 
-const file = e.target.files[0];
+async function handleFile(file){
 
-if (!file) return;
+    currentFile = file;
 
-currentFile = file;
+    currentBitmap?.close?.();
 
-const bitmap = await createImageBitmap(file);
+    currentBitmap = await createImageBitmap(file);
 
-currentBitmap = bitmap;
+    const url = URL.createObjectURL(file);
 
-DOM.beforeImage.src = URL.createObjectURL(file);
+    originalImage.src = url;
 
-DOM.startBtn.disabled = false;
+    uploadArea.classList.add('hidden');
 
-DOM.dropZone.style.display = "none";
+    compareWrapper.classList.remove('hidden');
 
-};
+    statusText.textContent = 'Imagem carregada';
 
-/* ===========================
-   WORKER CREATION
-=========================== */
-
-function createWorker() {
-
-const workerCode = `
-
-let aborted = false;
-
-self.onmessage = async (e) => {
-
-const data = e.data;
-
-if (data.type === "cancel") {
-aborted = true;
-return;
+    setupCanvasPreview();
 }
 
-if (data.type !== "start") return;
+/* =========================================================
+   PREVIEW
+========================================================= */
 
-aborted = false;
+function setupCanvasPreview(){
 
-const {
-bitmap,
-scale,
-tileSize
-} = data;
+    const rect = compareWrapper.getBoundingClientRect();
 
-try {
-
-const width = bitmap.width * scale;
-const height = bitmap.height * scale;
-
-const canvas = new OffscreenCanvas(width, height);
-
-const ctx = canvas.getContext("2d", {
-alpha: false,
-desynchronized: true
-});
-
-ctx.imageSmoothingEnabled = true;
-ctx.imageSmoothingQuality = "high";
-
-const totalTilesX = Math.ceil(bitmap.width / tileSize);
-const totalTilesY = Math.ceil(bitmap.height / tileSize);
-
-const totalTiles = totalTilesX * totalTilesY;
-
-let processed = 0;
-
-for (let ty = 0; ty < bitmap.height; ty += tileSize) {
-
-for (let tx = 0; tx < bitmap.width; tx += tileSize) {
-
-if (aborted) return;
-
-const sw = Math.min(tileSize, bitmap.width - tx);
-const sh = Math.min(tileSize, bitmap.height - ty);
-
-const temp = new OffscreenCanvas(sw, sh);
-
-const tctx = temp.getContext("2d", {
-alpha: false
-});
-
-tctx.drawImage(
-bitmap,
-tx, ty, sw, sh,
-0, 0, sw, sh
-);
-
-const upscaleW = sw * scale;
-const upscaleH = sh * scale;
-
-ctx.imageSmoothingEnabled = true;
-ctx.imageSmoothingQuality = "high";
-
-ctx.drawImage(
-temp,
-0,0,sw,sh,
-tx * scale,
-ty * scale,
-upscaleW,
-upscaleH
-);
-
-/* Adaptive Sharpen */
-
-ctx.filter = "contrast(1.05) saturate(1.03)";
-
-ctx.drawImage(
-canvas,
-0,
-0
-);
-
-ctx.filter = "none";
-
-processed++;
-
-self.postMessage({
-type: "progress",
-progress: Math.round((processed / totalTiles) * 100),
-processed,
-totalTiles
-});
-
-temp.width = 1;
-temp.height = 1;
-
-await new Promise(r => setTimeout(r, 0));
+    upscaledCanvas.width = rect.width;
+    upscaledCanvas.height = rect.height;
 
 }
 
-}
+/* =========================================================
+   START
+========================================================= */
 
-const blob = await canvas.convertToBlob({
-type: data.format,
-quality: 0.95
-});
+startBtn.addEventListener('click', async ()=>{
 
-self.postMessage({
-type: "done",
-blob
-});
+    if(!currentBitmap || isProcessing) return;
 
-bitmap.close?.();
+    isProcessing = true;
 
-canvas.width = 1;
-canvas.height = 1;
+    cancelRequested = false;
 
-} catch (err) {
+    cancelBtn.classList.remove('hidden');
 
-self.postMessage({
-type: "error",
-message: err.message
-});
+    downloadBtn.classList.add('hidden');
 
-}
+    startBtn.disabled = true;
 
-};
+    statusText.textContent = 'Inicializando IA';
 
-`;
+    const backend = await detectBackend();
 
-const blob = new Blob([workerCode], {
-type: "application/javascript"
-});
-
-return new Worker(URL.createObjectURL(blob));
-
-}
-
-/* ===========================
-   START PROCESS
-=========================== */
-
-DOM.startBtn.onclick = async () => {
-
-if (!currentBitmap || processing) return;
-
-processing = true;
-
-abort = false;
-
-DOM.startBtn.disabled = true;
-DOM.cancelBtn.disabled = false;
-DOM.downloadBtn.disabled = true;
-
-const backend = await detectBackend();
-
-DOM.backendBadge.innerText = backend.toUpperCase();
-
-const memory = navigator.deviceMemory || 2;
-
-const tier = getDeviceTier();
-
-const model =
-CONFIG.MODELS[DOM.modelSelect.value];
-
-let tileSize = model.tile;
-
-if (tier === "low") tileSize = 128;
-
-DOM.deviceInfo.innerText =
-"Device: " + tier;
-
-DOM.memoryInfo.innerText =
-"RAM estimada: " + memory + "GB";
-
-DOM.tileInfo.innerText =
-"Tile: " + tileSize;
-
-updateProgress(0,"Preparando imagem");
-
-worker = createWorker();
-
-worker.onmessage = async e => {
-
-const data = e.data;
-
-if (data.type === "progress") {
-
-requestAnimationFrame(() => {
-
-updateProgress(
-data.progress,
-"Processando tiles"
-);
+    startWorker(backend);
 
 });
 
-}
-
-if (data.type === "done") {
-
-finalBlob = data.blob;
-
-const url = URL.createObjectURL(finalBlob);
-
-const img = new Image();
-
-img.onload = () => {
-
-const canvas = DOM.afterCanvas;
-
-const ctx = canvas.getContext("2d");
-
-canvas.width = img.width;
-canvas.height = img.height;
-
-ctx.drawImage(img,0,0);
-
-URL.revokeObjectURL(url);
-
-processing = false;
-
-DOM.downloadBtn.disabled = false;
-DOM.cancelBtn.disabled = true;
-DOM.startBtn.disabled = false;
-
-updateProgress(100,"Concluído");
-
-};
-
-img.src = url;
-
-}
-
-if (data.type === "error") {
-
-console.error(data.message);
-
-processing = false;
-
-DOM.cancelBtn.disabled = true;
-DOM.startBtn.disabled = false;
-
-updateProgress(0,"Fallback ativado");
-
-fallbackUpscale();
-
-}
-
-};
-
-worker.postMessage({
-type: "start",
-bitmap: currentBitmap,
-scale,
-tileSize,
-format: DOM.formatSelect.value
-}, [currentBitmap]);
-
-};
-
-/* ===========================
-   FALLBACK
-=========================== */
-
-async function fallbackUpscale() {
-
-const img = await createImageBitmap(currentFile);
-
-const canvas = DOM.afterCanvas;
-
-canvas.width = img.width * scale;
-canvas.height = img.height * scale;
-
-const ctx = canvas.getContext("2d");
-
-ctx.imageSmoothingEnabled = true;
-ctx.imageSmoothingQuality = "high";
-
-ctx.drawImage(
-img,
-0,
-0,
-canvas.width,
-canvas.height
-);
-
-ctx.filter =
-"contrast(1.08) saturate(1.04)";
-
-ctx.drawImage(canvas,0,0);
-
-ctx.filter = "none";
-
-processing = false;
-
-DOM.downloadBtn.disabled = false;
-
-}
-
-/* ===========================
+/* =========================================================
    CANCEL
-=========================== */
+========================================================= */
 
-DOM.cancelBtn.onclick = () => {
+cancelBtn.addEventListener('click',()=>{
 
-abort = true;
+    cancelRequested = true;
 
-worker?.postMessage({
-type: "cancel"
+    worker?.terminate();
+
+    cleanup();
+
 });
 
-worker?.terminate();
+/* =========================================================
+   WORKER
+========================================================= */
 
-processing = false;
+function startWorker(backend){
 
-DOM.cancelBtn.disabled = true;
-DOM.startBtn.disabled = false;
+    const workerCode = createWorkerCode();
 
-updateProgress(0,"Cancelado");
+    const blob = new Blob(
+        [workerCode],
+        {type:'application/javascript'}
+    );
 
-};
+    worker = new Worker(
+        URL.createObjectURL(blob)
+    );
 
-/* ===========================
+    worker.onmessage = async e=>{
+
+        const data = e.data;
+
+        if(data.type === 'progress'){
+
+            updateProgress(
+                data.progress,
+                data.status
+            );
+
+        }
+
+        if(data.type === 'complete'){
+
+            await renderFinal(data.bitmap);
+
+            cleanup();
+
+        }
+
+        if(data.type === 'fallback'){
+
+            await fallbackUpscale();
+
+            cleanup();
+
+        }
+
+        if(data.type === 'error'){
+
+            console.error(data.error);
+
+            await fallbackUpscale();
+
+            cleanup();
+        }
+
+    };
+
+    worker.postMessage({
+
+        type:'start',
+
+        bitmap:currentBitmap,
+
+        scale:currentScale,
+
+        backend,
+
+        deviceMemory:navigator.deviceMemory || 2
+
+    },[currentBitmap]);
+
+}
+
+/* =========================================================
+   RENDER FINAL
+========================================================= */
+
+async function renderFinal(bitmap){
+
+    statusText.textContent =
+    'Reconstruindo imagem';
+
+    const ctx = upscaledCanvas.getContext('2d');
+
+    upscaledCanvas.width = bitmap.width;
+    upscaledCanvas.height = bitmap.height;
+
+    ctx.clearRect(
+        0,
+        0,
+        upscaledCanvas.width,
+        upscaledCanvas.height
+    );
+
+    ctx.drawImage(bitmap,0,0);
+
+    bitmap.close?.();
+
+    updateProgress(100,'Concluído');
+
+    downloadBtn.classList.remove('hidden');
+
+    enableCompare();
+}
+
+/* =========================================================
+   FALLBACK
+========================================================= */
+
+async function fallbackUpscale(){
+
+    updateProgress(30,'Fallback híbrido');
+
+    await nextFrame();
+
+    const w = currentBitmap.width * currentScale;
+    const h = currentBitmap.height * currentScale;
+
+    upscaledCanvas.width = w;
+    upscaledCanvas.height = h;
+
+    const ctx = upscaledCanvas.getContext('2d',{
+        alpha:false
+    });
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    ctx.drawImage(
+        currentBitmap,
+        0,
+        0,
+        w,
+        h
+    );
+
+    await nextFrame();
+
+    adaptiveSharpen(ctx,w,h);
+
+    await nextFrame();
+
+    edgeEnhance(ctx,w,h);
+
+    updateProgress(100,'Fallback concluído');
+
+    downloadBtn.classList.remove('hidden');
+
+    enableCompare();
+}
+
+/* =========================================================
+   SHARPEN
+========================================================= */
+
+function adaptiveSharpen(ctx,w,h){
+
+    const step = 64;
+
+    for(let y=0;y<h;y+=step){
+
+        const hh = Math.min(step,h-y);
+
+        const img = ctx.getImageData(0,y,w,hh);
+
+        const d = img.data;
+
+        for(let i=0;i<d.length;i+=4){
+
+            d[i] *= 1.04;
+            d[i+1] *= 1.04;
+            d[i+2] *= 1.04;
+        }
+
+        ctx.putImageData(img,0,y);
+    }
+}
+
+/* =========================================================
+   EDGE ENHANCE
+========================================================= */
+
+function edgeEnhance(ctx,w,h){
+
+    ctx.globalCompositeOperation = 'overlay';
+
+    ctx.filter = 'contrast(1.03) saturate(1.04)';
+
+    ctx.drawImage(
+        upscaledCanvas,
+        0,
+        0
+    );
+
+    ctx.filter = 'none';
+
+    ctx.globalCompositeOperation = 'source-over';
+}
+
+/* =========================================================
    DOWNLOAD
-=========================== */
+========================================================= */
 
-DOM.downloadBtn.onclick = async () => {
+downloadBtn.addEventListener('click', async ()=>{
 
-if (!finalBlob) {
+    statusText.textContent =
+    'Exportando';
 
-DOM.afterCanvas.toBlob(async blob => {
+    const type = formatSelect.value;
 
-downloadBlob(blob);
+    const quality = Number(
+        qualityRange.value
+    );
 
-}, DOM.formatSelect.value, .95);
+    upscaledCanvas.toBlob(blob=>{
 
-return;
+        const url =
+        URL.createObjectURL(blob);
 
-}
+        const a =
+        document.createElement('a');
 
-downloadBlob(finalBlob);
+        a.href = url;
 
-};
+        a.download =
+        `NexusAI_${currentScale}x.${
+            type.includes('png')
+            ? 'png'
+            : 'jpg'
+        }`;
 
-function downloadBlob(blob) {
+        document.body.appendChild(a);
 
-const url = URL.createObjectURL(blob);
+        a.click();
 
-const a = document.createElement("a");
+        setTimeout(()=>{
 
-a.href = url;
+            URL.revokeObjectURL(url);
 
-const ext =
-DOM.formatSelect.value === "image/png"
-? "png"
-: "jpg";
+            a.remove();
 
-a.download =
-"NexusAI_" + scale + "x." + ext;
+        },1500);
 
-document.body.appendChild(a);
+    },type,quality);
 
-a.click();
+});
 
-setTimeout(() => {
-
-URL.revokeObjectURL(url);
-
-a.remove();
-
-}, 1500);
-
-}
-
-/* ===========================
-   PROGRESS
-=========================== */
-
-function updateProgress(value,text) {
-
-DOM.progressBar.style.width = value + "%";
-
-DOM.progressText.innerText =
-value + "%";
-
-DOM.statusText.innerText = text;
-
-}
-
-/* ===========================
-   SLIDER
-=========================== */
+/* =========================================================
+   COMPARE
+========================================================= */
 
 let dragging = false;
 
-DOM.slider.addEventListener("mousedown", () => {
-dragging = true;
-});
+slider.addEventListener('mousedown',()=>dragging=true);
 
-window.addEventListener("mouseup", () => {
-dragging = false;
-});
+window.addEventListener('mouseup',()=>dragging=false);
 
-window.addEventListener("mousemove", e => {
+window.addEventListener('mousemove',moveSlider);
 
-if (!dragging) return;
+slider.addEventListener('touchstart',()=>dragging=true,{passive:true});
 
-const rect =
-DOM.afterCanvas.parentElement.getBoundingClientRect();
+window.addEventListener('touchend',()=>dragging=false);
 
-let x = e.clientX - rect.left;
+window.addEventListener('touchmove',moveSlider,{passive:true});
 
-x = Math.max(0,Math.min(x,rect.width));
+function moveSlider(e){
 
-const percent = (x / rect.width) * 100;
+    if(!dragging) return;
 
-DOM.slider.style.left = percent + "%";
+    const rect =
+    compareWrapper.getBoundingClientRect();
 
-DOM.beforeImage.style.clipPath =
-\`polygon(0 0,\${percent}% 0,\${percent}% 100%,0 100%)\`;
+    const clientX =
+    e.touches
+    ? e.touches[0].clientX
+    : e.clientX;
 
-DOM.afterCanvas.style.clipPath =
-\`polygon(\${percent}% 0,100% 0,100% 100%,\${percent}% 100%)\`;
+    let x = clientX - rect.left;
 
-});
+    x = Math.max(0,Math.min(x,rect.width));
 
-/* ===========================
+    const percent = x / rect.width * 100;
+
+    slider.style.left = percent + '%';
+
+    originalImage.style.clipPath =
+    `polygon(0 0,${percent}% 0,${percent}% 100%,0 100%)`;
+
+    upscaledCanvas.style.clipPath =
+    `polygon(${percent}% 0,100% 0,100% 100%,${percent}% 100%)`;
+}
+
+function enableCompare(){
+
+    originalImage.style.clipPath =
+    'polygon(0 0,50% 0,50% 100%,0 100%)';
+
+    upscaledCanvas.style.clipPath =
+    'polygon(50% 0,100% 0,100% 100%,50% 100%)';
+}
+
+/* =========================================================
+   PROGRESS
+========================================================= */
+
+function updateProgress(value,text){
+
+    requestAnimationFrame(()=>{
+
+        progressBar.style.width =
+        value + '%';
+
+        progressText.textContent =
+        Math.round(value) + '%';
+
+        statusText.textContent =
+        text;
+    });
+}
+
+/* =========================================================
+   CLEANUP
+========================================================= */
+
+function cleanup(){
+
+    isProcessing = false;
+
+    cancelBtn.classList.add('hidden');
+
+    startBtn.disabled = false;
+
+    worker?.terminate();
+
+    worker = null;
+}
+
+/* =========================================================
+   UTILS
+========================================================= */
+
+function nextFrame(){
+
+    return new Promise(r=>
+        requestAnimationFrame(r)
+    );
+}
+
+/* =========================================================
+   WORKER CODE
+========================================================= */
+
+function createWorkerCode(){
+
+return `
+
+self.onmessage = async e => {
+
+    const data = e.data;
+
+    if(data.type !== 'start') return;
+
+    try{
+
+        const bitmap = data.bitmap;
+
+        const scale = data.scale;
+
+        const memory = data.deviceMemory;
+
+        const tileSize =
+            memory <= 2 ? 128 :
+            memory <= 4 ? 192 :
+            256;
+
+        self.postMessage({
+            type:'progress',
+            progress:5,
+            status:'Preparando imagem'
+        });
+
+        const targetW =
+        bitmap.width * scale;
+
+        const targetH =
+        bitmap.height * scale;
+
+        const offscreen =
+        new OffscreenCanvas(
+            targetW,
+            targetH
+        );
+
+        const ctx =
+        offscreen.getContext('2d',{
+            alpha:false
+        });
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        const totalTiles =
+        Math.ceil(bitmap.width / tileSize) *
+        Math.ceil(bitmap.height / tileSize);
+
+        let processed = 0;
+
+        for(
+            let y=0;
+            y<bitmap.height;
+            y+=tileSize
+        ){
+
+            for(
+                let x=0;
+                x<bitmap.width;
+                x+=tileSize
+            ){
+
+                const w =
+                Math.min(
+                    tileSize,
+                    bitmap.width - x
+                );
+
+                const h =
+                Math.min(
+                    tileSize,
+                    bitmap.height - y
+                );
+
+                const sx = x;
+                const sy = y;
+
+                const dx = x * scale;
+                const dy = y * scale;
+
+                const dw = w * scale;
+                const dh = h * scale;
+
+                ctx.drawImage(
+                    bitmap,
+                    sx,
+                    sy,
+                    w,
+                    h,
+                    dx,
+                    dy,
+                    dw,
+                    dh
+                );
+
+                processed++;
+
+                const progress =
+                5 + (
+                    processed /
+                    totalTiles
+                ) * 90;
+
+                self.postMessage({
+
+                    type:'progress',
+
+                    progress,
+
+                    status:
+                    'Processando tiles'
+
+                });
+
+                await new Promise(r=>
+                    setTimeout(r,0)
+                );
+            }
+        }
+
+        self.postMessage({
+            type:'progress',
+            progress:97,
+            status:'Finalizando'
+        });
+
+        const finalBitmap =
+        offscreen.transferToImageBitmap();
+
+        bitmap.close?.();
+
+        self.postMessage({
+
+            type:'complete',
+
+            bitmap:finalBitmap
+
+        },[finalBitmap]);
+
+    }catch(err){
+
+        self.postMessage({
+
+            type:'error',
+
+            error:err.message
+
+        });
+    }
+};
+
+`;
+}
+
+/* =========================================================
    INIT
-=========================== */
+========================================================= */
 
-(async () => {
+detectBackend();
 
-const backend = await detectBackend();
-
-DOM.backendBadge.innerText =
-backend.toUpperCase();
-
-})();
 </script>
 
 </body>
